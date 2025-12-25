@@ -1,0 +1,17 @@
+export * from './bookings.service';
+import { BookingsService } from './bookings.service';
+export * from './classes.service';
+import { ClassesService } from './classes.service';
+export * from './rooms.service';
+import { RoomsService } from './rooms.service';
+export * from './schedules.service';
+import { SchedulesService } from './schedules.service';
+export * from './sessions.service';
+import { SessionsService } from './sessions.service';
+export * from './students.service';
+import { StudentsService } from './students.service';
+export * from './subjects.service';
+import { SubjectsService } from './subjects.service';
+export * from './teachers.service';
+import { TeachersService } from './teachers.service';
+export const APIS = [BookingsService, ClassesService, RoomsService, SchedulesService, SessionsService, StudentsService, SubjectsService, TeachersService];
