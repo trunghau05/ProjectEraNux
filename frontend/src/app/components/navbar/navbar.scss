@@ -1,0 +1,115 @@
+.logo {
+    font-weight: bolder;
+    gap: 15px;
+}
+
+.ic-logo {
+    color: #333;
+}
+
+.navbar {
+    background-color: white;
+    height: 100vh;
+    box-sizing: border-box;
+    padding: 30px 0;
+    align-items: center;
+    justify-content: space-between;
+    border-right: 1px solid #f0f0f0;
+}
+
+.nav-list {
+    gap: 30px;
+}
+
+.nav-item {
+    gap: 25px;
+    width: 100%;
+    position: relative;
+    cursor: pointer;
+
+    span {
+        font-weight: 500;
+        font-size: 12px;
+        margin-right: 35px;
+        width: 60px;
+        color: #c1c1c1;
+    }
+
+    .ic {
+        margin-left: 35px;
+
+        mat-icon {
+            font-size: 15px;
+            height: 15px;
+            width: 15px;
+            color: #c1c1c1;
+        }
+    }
+
+    &:hover {
+        .ic mat-icon {
+            color: #6b46c1;
+        }
+
+        span {
+            color: #333;
+        }
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+
+        width: 2px;
+        height: 100%;
+        background-color: #6b46c1;
+
+        transform: scaleY(0); 
+        transform-origin: center; 
+        transition: transform 0.3s ease;
+    }
+
+    &:hover::after {
+        transform: scaleY(1);
+    }
+    
+    &.active::after {
+        transform: scaleY(1);
+    }
+
+    &.active {
+        .ic mat-icon {
+            color: #6b46c1;
+        }
+
+        span {
+            color: #333;
+        }
+    }
+}
+
+.footer {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ft-item {
+    border-radius: 15px;
+    gap: 5px;
+
+    p {
+        font-size: 11px;
+    }
+}
+
+.ft-item button {
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: none;
+    background:linear-gradient(135deg,#6b46c1 0%,#9f7aea 100%);
+    color: #fff;
+    cursor: pointer;
+}

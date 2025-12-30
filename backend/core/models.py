@@ -40,7 +40,7 @@ class Teacher(TimeStampedModel):
     ]
 
     name = models.CharField(max_length=100)
-    bio = models.TextField(blank=True)
+    bio = models.TextField(blank=True, null=True)
     birth = models.DateField(null=True, blank=True)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
     phone = models.CharField(max_length=20, blank=True)
@@ -98,6 +98,7 @@ class Class(TimeStampedModel):
 
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     level = models.CharField(max_length=50, blank=True)
+    max_students = models.PositiveIntegerField(default=30)
     description = models.TextField(blank=True)
     status = models.CharField(
         max_length=10,

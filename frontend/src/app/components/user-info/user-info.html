@@ -1,0 +1,17 @@
+<div class="info-container flex-col">
+    <div class="ic flex-betw">
+        <div class="btn-edit flex-cen">
+            <span>Edit</span>
+        </div>
+        <div class="flex-cen" style="cursor: pointer;" (click)="logout()">
+            <mat-icon>logout</mat-icon>
+        </div>
+    </div>
+    <div class="info-item flex-col">
+        <div class="img">
+
+        </div>
+        <span>{{ usName }}</span>
+        <p>{{ user.role }}</p>
+    </div>
+</div>

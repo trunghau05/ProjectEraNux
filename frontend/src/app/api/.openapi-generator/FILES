@@ -1,11 +1,11 @@
 .gitignore
-.openapi-generator-ignore
 README.md
 api.base.service.ts
 api.module.ts
 api/api.ts
 api/bookings.service.ts
 api/classes.service.ts
+api/login.service.ts
 api/rooms.service.ts
 api/schedules.service.ts
 api/sessions.service.ts
@@ -21,6 +21,7 @@ model/bookingStatusEnum.ts
 model/class.ts
 model/classStatusEnum.ts
 model/labelEnum.ts
+model/login.ts
 model/models.ts
 model/patchedBooking.ts
 model/patchedClass.ts

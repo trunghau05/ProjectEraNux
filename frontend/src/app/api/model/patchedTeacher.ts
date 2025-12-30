@@ -14,7 +14,7 @@ export interface PatchedTeacher {
     readonly id?: number;
     readonly created_at?: string;
     name?: string;
-    bio?: string;
+    bio?: string | null;
     birth?: string | null;
     label?: LabelEnum;
     phone?: string;

@@ -21,4 +21,5 @@ urlpatterns = [
     path('api/schedules/', include('schedules.urls')),
     path('api/sessions/', include('class_sessions.urls')),
     path('api/rooms/', include('rooms.urls')),
+    path('api/login/', include('core.urls')),
 ]

@@ -16,6 +16,7 @@ export interface Class {
     readonly created_at: string;
     type: TypeEnum;
     level?: string;
+    max_students?: number;
     description?: string;
     status?: ClassStatusEnum;
     subject: number;

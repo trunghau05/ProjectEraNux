@@ -3,6 +3,7 @@ export * from './bookingStatusEnum';
 export * from './class';
 export * from './classStatusEnum';
 export * from './labelEnum';
+export * from './login';
 export * from './patchedBooking';
 export * from './patchedClass';
 export * from './patchedRoom';
