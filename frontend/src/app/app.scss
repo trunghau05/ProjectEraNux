@@ -1,12 +1,17 @@
 .container {
-  position: relative;
   width: 100%;
   height: 100vh;
   background-color: #f7f7f7;
 }
 
+.content {
+  flex: 1;
+  overflow-y: auto;
+  width: 100%;
+}
+
 app-navbar {
-  position: absolute;
   left: 0;
   top: 0;
+  flex-shrink: 0; 
 }

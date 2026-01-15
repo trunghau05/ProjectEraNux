@@ -1,4 +1,5 @@
 .gitignore
+.openapi-generator-ignore
 README.md
 api.base.service.ts
 api.module.ts
@@ -19,6 +20,7 @@ index.ts
 model/booking.ts
 model/bookingStatusEnum.ts
 model/class.ts
+model/classDetail.ts
 model/classStatusEnum.ts
 model/labelEnum.ts
 model/login.ts

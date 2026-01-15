@@ -24,9 +24,10 @@ npm install @angular/cdk
 npm install -g @openapitools/openapi-generator-cli
 npm install axios
 npm install
+npm run start
 ng build
 ng serve
 ---
 python manage.py spectacular --file openapi.json
-openapi-generator-cli generate -i http://localhost:8000/api/schema/ -g typescript-angular -o src/app/api --additional-properties=providedInRoot=true
+openapi-generator-cli generate -i http://localhost:8000/api/schema/ -g typescript-angular -o src/app/apis --additional-properties=providedInRoot=true
 

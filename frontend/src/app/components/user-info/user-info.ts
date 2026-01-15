@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { Student, StudentsService, Teacher, TeachersService } from '../../api';
+import { Student, StudentsService, Teacher, TeachersService } from '../../apis';
 
 @Component({
   selector: 'app-user-info',
@@ -13,6 +13,7 @@ export class UserInfo implements OnInit {
   private studentService = inject(StudentsService);
   private teacherService = inject(TeachersService);
 
+  usName = signal<string>('');
   student = signal<Student>({} as Student);
   teacher = signal<Teacher>({} as Teacher);
 
@@ -20,8 +21,6 @@ export class UserInfo implements OnInit {
     id: 0,
     role: ''
   };
-
-  usName = '';
 
   ngOnInit(): void {
       this.user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -33,7 +32,7 @@ export class UserInfo implements OnInit {
       this.studentService.studentsRetrieve(this.user.id).subscribe({
         next: (res) => {
           this.student.set(res);
-          this.usName = res.name; 
+          this.usName.set(res.name);
           let role = this.user.role.charAt(0).toUpperCase() + this.user.role.slice(1);
           this.user.role = role;
           console.log(this.student());
@@ -45,7 +44,7 @@ export class UserInfo implements OnInit {
     } else if (this.user.role === 'teacher' || this.user.role == 'tutor') {
       this.teacherService.teachersRetrieve(this.user.id).subscribe({
         next: (res) => {
-          this.usName = res.name;
+          this.usName.set(res.name);
           this.teacher.set(res);
           let role = this.user.role.charAt(0).toUpperCase() + this.user.role.slice(1);
           this.user.role = role;

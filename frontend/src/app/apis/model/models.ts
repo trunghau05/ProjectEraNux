@@ -1,6 +1,7 @@
 export * from './booking';
 export * from './bookingStatusEnum';
 export * from './class';
+export * from './classDetail';
 export * from './classStatusEnum';
 export * from './labelEnum';
 export * from './login';

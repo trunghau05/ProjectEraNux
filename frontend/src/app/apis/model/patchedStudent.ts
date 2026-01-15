@@ -9,15 +9,15 @@
  */
 
 
-export interface Student { 
-    readonly id: number;
-    readonly created_at: string;
-    name: string;
+export interface PatchedStudent { 
+    readonly id?: number;
+    readonly created_at?: string;
+    name?: string;
     birth?: string | null;
     level?: string;
     phone?: string;
-    email: string;
-    password: string;
-    img?: string;
+    email?: string;
+    password?: string;
+    img?: string | null;
 }
 

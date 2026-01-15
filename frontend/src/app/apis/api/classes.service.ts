@@ -19,6 +19,8 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 // @ts-ignore
 import { Class } from '../model/class';
 // @ts-ignore
+import { ClassDetail } from '../model/classDetail';
+// @ts-ignore
 import { PatchedClass } from '../model/patchedClass';
 
 // @ts-ignore
@@ -38,7 +40,129 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
+     * @endpoint get /api/classes/by-student/{student_id}/
+     * @param studentId ID của student (từ bảng in_class)
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public classesByStudentList(studentId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ClassDetail>>;
+    public classesByStudentList(studentId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ClassDetail>>>;
+    public classesByStudentList(studentId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ClassDetail>>>;
+    public classesByStudentList(studentId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (studentId === null || studentId === undefined) {
+            throw new Error('Required parameter studentId was null or undefined when calling classesByStudentList.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/classes/by-student/${this.configuration.encodeParam({name: "studentId", value: studentId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<ClassDetail>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
+     * @endpoint get /api/classes/by-teacher/{teacher_id}/
+     * @param teacherId ID của teacher
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public classesByTeacherList(teacherId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ClassDetail>>;
+    public classesByTeacherList(teacherId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ClassDetail>>>;
+    public classesByTeacherList(teacherId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ClassDetail>>>;
+    public classesByTeacherList(teacherId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (teacherId === null || teacherId === undefined) {
+            throw new Error('Required parameter teacherId was null or undefined when calling classesByTeacherList.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/classes/by-teacher/${this.configuration.encodeParam({name: "teacherId", value: teacherId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<ClassDetail>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
      * @endpoint post /api/classes/
      * @param _class 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -111,7 +235,7 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
      * @endpoint delete /api/classes/{id}/
      * @param id A unique integer value identifying this class.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -171,7 +295,7 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
      * @endpoint get /api/classes/
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -228,7 +352,7 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
      * @endpoint patch /api/classes/{id}/
      * @param id A unique integer value identifying this class.
      * @param patchedClass 
@@ -302,16 +426,16 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
      * @endpoint get /api/classes/{id}/
      * @param id A unique integer value identifying this class.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Class>;
-    public classesRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Class>>;
-    public classesRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Class>>;
+    public classesRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClassDetail>;
+    public classesRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClassDetail>>;
+    public classesRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClassDetail>>;
     public classesRetrieve(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling classesRetrieve.');
@@ -349,7 +473,7 @@ export class ClassesService extends BaseService {
 
         let localVarPath = `/api/classes/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Class>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ClassDetail>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -363,7 +487,7 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API
+     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
      * @endpoint put /api/classes/{id}/
      * @param id A unique integer value identifying this class.
      * @param _class 

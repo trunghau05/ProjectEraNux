@@ -72,6 +72,11 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'Backend API',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'ENUM_NAME_OVERRIDES': {
+        'ClassStatusEnum': 'core.models.Class.STATUS_CHOICES',
+        'SessionStatusEnum': 'core.models.Session.STATUS_CHOICES',
+        'BookingStatusEnum': 'core.models.Booking.STATUS_CHOICES',
+    }
 }
 
 CORS_ALLOW_ALL_ORIGINS = True

@@ -166,7 +166,14 @@ paths:
   /api/classes/:
     get:
       operationId: classes_list
-      description: Class API
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
       tags:
       - classes
       security:
@@ -184,7 +191,14 @@ paths:
           description: ''
     post:
       operationId: classes_create
-      description: Class API
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
       tags:
       - classes
       requestBody:
@@ -213,7 +227,14 @@ paths:
   /api/classes/{id}/:
     get:
       operationId: classes_retrieve
-      description: Class API
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
       parameters:
       - in: path
         name: id
@@ -232,11 +253,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Class'
+                $ref: '#/components/schemas/ClassDetail'
           description: ''
     put:
       operationId: classes_update
-      description: Class API
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
       parameters:
       - in: path
         name: id
@@ -271,7 +299,14 @@ paths:
           description: ''
     patch:
       operationId: classes_partial_update
-      description: Class API
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
       parameters:
       - in: path
         name: id
@@ -305,7 +340,14 @@ paths:
           description: ''
     delete:
       operationId: classes_destroy
-      description: Class API
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
       parameters:
       - in: path
         name: id
@@ -322,6 +364,72 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/classes/by-student/{student_id}/:
+    get:
+      operationId: classes_by_student_list
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: integer
+        description: ID của student (từ bảng in_class)
+        required: true
+      tags:
+      - classes
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClassDetail'
+          description: ''
+  /api/classes/by-teacher/{teacher_id}/:
+    get:
+      operationId: classes_by_teacher_list
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
+      parameters:
+      - in: path
+        name: teacher_id
+        schema:
+          type: integer
+        description: ID của teacher
+        required: true
+      tags:
+      - classes
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClassDetail'
+          description: ''
   /api/login/:
     post:
       operationId: login_create
@@ -1497,6 +1605,44 @@ components:
       - subject
       - teacher
       - type
+    ClassDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subject:
+          allOf:
+          - $ref: '#/components/schemas/Subject'
+          readOnly: true
+        teacher:
+          allOf:
+          - $ref: '#/components/schemas/Teacher'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        level:
+          type: string
+          maxLength: 50
+        max_students:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/ClassStatusEnum'
+      required:
+      - created_at
+      - id
+      - subject
+      - teacher
+      - type
     ClassStatusEnum:
       enum:
       - active
@@ -1669,6 +1815,7 @@ components:
           maxLength: 255
         img:
           type: string
+          nullable: true
           maxLength: 255
     PatchedSubject:
       type: object
@@ -1859,6 +2006,7 @@ components:
           maxLength: 255
         img:
           type: string
+          nullable: true
           maxLength: 255
       required:
       - created_at

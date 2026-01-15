@@ -9,9 +9,17 @@
     </div>
     <div class="info-item flex-col">
         <div class="img">
-
+            @if (user.role.toLowerCase() === 'student') {
+                @if (student().img === '') {
+                    <img src="default-avatar.jpg" alt="">
+                } @else {
+                    <img src="{{ student().img }}" alt="">
+                }
+            } @else {
+                <img src="{{ teacher().img }}" alt="">
+            }
         </div>
-        <span>{{ usName }}</span>
+        <span>{{ usName() }}</span>
         <p>{{ user.role }}</p>
     </div>
 </div>
