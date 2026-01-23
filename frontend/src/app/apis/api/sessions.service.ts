@@ -20,6 +20,8 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 import { PatchedSession } from '../model/patchedSession';
 // @ts-ignore
 import { Session } from '../model/session';
+// @ts-ignore
+import { SessionDetail } from '../model/sessionDetail';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -38,7 +40,129 @@ export class SessionsService extends BaseService {
     }
 
     /**
-     * Session API
+     * Get all sessions of a specific student
+     * @endpoint get /api/sessions/by-student/{student_id}/
+     * @param studentId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sessionsByStudentList(studentId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SessionDetail>>;
+    public sessionsByStudentList(studentId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SessionDetail>>>;
+    public sessionsByStudentList(studentId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SessionDetail>>>;
+    public sessionsByStudentList(studentId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (studentId === null || studentId === undefined) {
+            throw new Error('Required parameter studentId was null or undefined when calling sessionsByStudentList.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/sessions/by-student/${this.configuration.encodeParam({name: "studentId", value: studentId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<SessionDetail>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Get all sessions of a specific teacher
+     * @endpoint get /api/sessions/by-teacher/{teacher_id}/
+     * @param teacherId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public sessionsByTeacherList(teacherId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SessionDetail>>;
+    public sessionsByTeacherList(teacherId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SessionDetail>>>;
+    public sessionsByTeacherList(teacherId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SessionDetail>>>;
+    public sessionsByTeacherList(teacherId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (teacherId === null || teacherId === undefined) {
+            throw new Error('Required parameter teacherId was null or undefined when calling sessionsByTeacherList.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/sessions/by-teacher/${this.configuration.encodeParam({name: "teacherId", value: teacherId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<SessionDetail>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Session API ViewSet  Provides: - CRUD operations for Session - Custom endpoints to get sessions by student or teacher
      * @endpoint post /api/sessions/
      * @param session 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -111,7 +235,7 @@ export class SessionsService extends BaseService {
     }
 
     /**
-     * Session API
+     * Session API ViewSet  Provides: - CRUD operations for Session - Custom endpoints to get sessions by student or teacher
      * @endpoint delete /api/sessions/{id}/
      * @param id A unique integer value identifying this session.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -171,7 +295,7 @@ export class SessionsService extends BaseService {
     }
 
     /**
-     * Session API
+     * Session API ViewSet  Provides: - CRUD operations for Session - Custom endpoints to get sessions by student or teacher
      * @endpoint get /api/sessions/
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -228,7 +352,7 @@ export class SessionsService extends BaseService {
     }
 
     /**
-     * Session API
+     * Session API ViewSet  Provides: - CRUD operations for Session - Custom endpoints to get sessions by student or teacher
      * @endpoint patch /api/sessions/{id}/
      * @param id A unique integer value identifying this session.
      * @param patchedSession 
@@ -302,7 +426,7 @@ export class SessionsService extends BaseService {
     }
 
     /**
-     * Session API
+     * Session API ViewSet  Provides: - CRUD operations for Session - Custom endpoints to get sessions by student or teacher
      * @endpoint get /api/sessions/{id}/
      * @param id A unique integer value identifying this session.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -363,7 +487,7 @@ export class SessionsService extends BaseService {
     }
 
     /**
-     * Session API
+     * Session API ViewSet  Provides: - CRUD operations for Session - Custom endpoints to get sessions by student or teacher
      * @endpoint put /api/sessions/{id}/
      * @param id A unique integer value identifying this session.
      * @param session 

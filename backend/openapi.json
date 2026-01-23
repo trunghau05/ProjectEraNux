@@ -776,7 +776,12 @@ paths:
   /api/sessions/:
     get:
       operationId: sessions_list
-      description: Session API
+      description: |-
+        Session API ViewSet
+
+        Provides:
+        - CRUD operations for Session
+        - Custom endpoints to get sessions by student or teacher
       tags:
       - sessions
       security:
@@ -794,7 +799,12 @@ paths:
           description: ''
     post:
       operationId: sessions_create
-      description: Session API
+      description: |-
+        Session API ViewSet
+
+        Provides:
+        - CRUD operations for Session
+        - Custom endpoints to get sessions by student or teacher
       tags:
       - sessions
       requestBody:
@@ -823,7 +833,12 @@ paths:
   /api/sessions/{id}/:
     get:
       operationId: sessions_retrieve
-      description: Session API
+      description: |-
+        Session API ViewSet
+
+        Provides:
+        - CRUD operations for Session
+        - Custom endpoints to get sessions by student or teacher
       parameters:
       - in: path
         name: id
@@ -846,7 +861,12 @@ paths:
           description: ''
     put:
       operationId: sessions_update
-      description: Session API
+      description: |-
+        Session API ViewSet
+
+        Provides:
+        - CRUD operations for Session
+        - Custom endpoints to get sessions by student or teacher
       parameters:
       - in: path
         name: id
@@ -881,7 +901,12 @@ paths:
           description: ''
     patch:
       operationId: sessions_partial_update
-      description: Session API
+      description: |-
+        Session API ViewSet
+
+        Provides:
+        - CRUD operations for Session
+        - Custom endpoints to get sessions by student or teacher
       parameters:
       - in: path
         name: id
@@ -915,7 +940,12 @@ paths:
           description: ''
     delete:
       operationId: sessions_destroy
-      description: Session API
+      description: |-
+        Session API ViewSet
+
+        Provides:
+        - CRUD operations for Session
+        - Custom endpoints to get sessions by student or teacher
       parameters:
       - in: path
         name: id
@@ -932,6 +962,56 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/sessions/by-student/{student_id}/:
+    get:
+      operationId: sessions_by_student_list
+      description: Get all sessions of a specific student
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - sessions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionDetail'
+          description: ''
+  /api/sessions/by-teacher/{teacher_id}/:
+    get:
+      operationId: sessions_by_teacher_list
+      description: Get all sessions of a specific teacher
+      parameters:
+      - in: path
+        name: teacher_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - sessions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionDetail'
+          description: ''
   /api/students/:
     get:
       operationId: students_list
@@ -1549,17 +1629,17 @@ components:
           readOnly: true
         status:
           $ref: '#/components/schemas/BookingStatusEnum'
+        teacher:
+          type: integer
         time_slot:
           type: integer
         student:
           type: integer
-        class_obj:
-          type: integer
       required:
-      - class_obj
       - created_at
       - id
       - student
+      - teacher
       - time_slot
     BookingStatusEnum:
       enum:
@@ -1581,8 +1661,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        type:
-          $ref: '#/components/schemas/TypeEnum'
         level:
           type: string
           maxLength: 50
@@ -1604,7 +1682,6 @@ components:
       - id
       - subject
       - teacher
-      - type
     ClassDetail:
       type: object
       properties:
@@ -1623,8 +1700,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        type:
-          $ref: '#/components/schemas/TypeEnum'
         level:
           type: string
           maxLength: 50
@@ -1642,25 +1717,18 @@ components:
       - id
       - subject
       - teacher
-      - type
     ClassStatusEnum:
       enum:
-      - active
-      - inactive
-      - completed
+      - open
+      - closed
+      - complete
+      - full
       type: string
       description: |-
-        * `active` - Active
-        * `inactive` - Inactive
-        * `completed` - Completed
-    LabelEnum:
-      enum:
-      - tutor
-      - teacher
-      type: string
-      description: |-
-        * `tutor` - Tutor
-        * `teacher` - Teacher
+        * `open` - Open
+        * `closed` - Closed
+        * `complete` - Complete
+        * `full` - Full
     Login:
       type: object
       properties:
@@ -1685,11 +1753,11 @@ components:
           readOnly: true
         status:
           $ref: '#/components/schemas/BookingStatusEnum'
+        teacher:
+          type: integer
         time_slot:
           type: integer
         student:
-          type: integer
-        class_obj:
           type: integer
     PatchedClass:
       type: object
@@ -1701,8 +1769,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        type:
-          $ref: '#/components/schemas/TypeEnum'
         level:
           type: string
           maxLength: 50
@@ -1778,17 +1844,24 @@ components:
           $ref: '#/components/schemas/SessionStatusEnum'
         class_obj:
           type: integer
-        teacher:
-          type: integer
-        booking:
+          nullable: true
+        time_slot:
           type: integer
           nullable: true
+        student:
+          type: integer
+          nullable: true
+        teacher:
+          type: integer
     PatchedStudent:
       type: object
       properties:
         id:
           type: integer
           readOnly: true
+        password:
+          type: string
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -1796,13 +1869,6 @@ components:
         name:
           type: string
           maxLength: 100
-        birth:
-          type: string
-          format: date
-          nullable: true
-        level:
-          type: string
-          maxLength: 50
         phone:
           type: string
           maxLength: 20
@@ -1810,9 +1876,6 @@ components:
           type: string
           format: email
           maxLength: 254
-        password:
-          type: string
-          maxLength: 255
         img:
           type: string
           nullable: true
@@ -1838,6 +1901,9 @@ components:
         id:
           type: integer
           readOnly: true
+        password:
+          type: string
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -1848,12 +1914,8 @@ components:
         bio:
           type: string
           nullable: true
-        birth:
-          type: string
-          format: date
-          nullable: true
-        label:
-          $ref: '#/components/schemas/LabelEnum'
+        role:
+          $ref: '#/components/schemas/RoleEnum'
         phone:
           type: string
           maxLength: 20
@@ -1861,16 +1923,23 @@ components:
           type: string
           format: email
           maxLength: 254
-        password:
-          type: string
-          maxLength: 255
         img:
           type: string
+          nullable: true
           maxLength: 255
         rating:
           type: string
           format: decimal
           pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          nullable: true
+    RoleEnum:
+      enum:
+      - tutor
+      - teacher
+      type: string
+      description: |-
+        * `tutor` - Tutor
+        * `teacher` - Teacher
     Room:
       type: object
       properties:
@@ -1950,18 +2019,64 @@ components:
           $ref: '#/components/schemas/SessionStatusEnum'
         class_obj:
           type: integer
-        teacher:
-          type: integer
-        booking:
+          nullable: true
+        time_slot:
           type: integer
           nullable: true
+        student:
+          type: integer
+          nullable: true
+        teacher:
+          type: integer
+      required:
+      - created_at
+      - end_at
+      - id
+      - start_at
+      - teacher
+    SessionDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        class_obj:
+          allOf:
+          - $ref: '#/components/schemas/Class'
+          readOnly: true
+        teacher:
+          allOf:
+          - $ref: '#/components/schemas/Teacher'
+          readOnly: true
+        time_slot:
+          allOf:
+          - $ref: '#/components/schemas/TimeSlot'
+          readOnly: true
+        student:
+          allOf:
+          - $ref: '#/components/schemas/Student'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/SessionStatusEnum'
       required:
       - class_obj
       - created_at
       - end_at
       - id
       - start_at
+      - student
       - teacher
+      - time_slot
     SessionStatusEnum:
       enum:
       - upcoming
@@ -1980,6 +2095,9 @@ components:
         id:
           type: integer
           readOnly: true
+        password:
+          type: string
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -1987,13 +2105,6 @@ components:
         name:
           type: string
           maxLength: 100
-        birth:
-          type: string
-          format: date
-          nullable: true
-        level:
-          type: string
-          maxLength: 50
         phone:
           type: string
           maxLength: 20
@@ -2001,9 +2112,6 @@ components:
           type: string
           format: email
           maxLength: 254
-        password:
-          type: string
-          maxLength: 255
         img:
           type: string
           nullable: true
@@ -2039,6 +2147,9 @@ components:
         id:
           type: integer
           readOnly: true
+        password:
+          type: string
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -2049,12 +2160,8 @@ components:
         bio:
           type: string
           nullable: true
-        birth:
-          type: string
-          format: date
-          nullable: true
-        label:
-          $ref: '#/components/schemas/LabelEnum'
+        role:
+          $ref: '#/components/schemas/RoleEnum'
         phone:
           type: string
           maxLength: 20
@@ -2062,31 +2169,56 @@ components:
           type: string
           format: email
           maxLength: 254
-        password:
-          type: string
-          maxLength: 255
         img:
           type: string
+          nullable: true
           maxLength: 255
         rating:
           type: string
           format: decimal
           pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
+          nullable: true
       required:
       - created_at
       - email
       - id
-      - label
       - name
       - password
-    TypeEnum:
+      - role
+    TimeSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/TimeSlotStatusEnum'
+        teacher:
+          type: integer
+      required:
+      - created_at
+      - end_at
+      - id
+      - start_at
+      - teacher
+    TimeSlotStatusEnum:
       enum:
-      - online
-      - offline
+      - available
+      - booked
       type: string
       description: |-
-        * `online` - Online
-        * `offline` - Offline
+        * `available` - Available
+        * `booked` - Booked
   securitySchemes:
     basicAuth:
       type: http

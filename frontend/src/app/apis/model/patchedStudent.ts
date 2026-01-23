@@ -11,13 +11,11 @@
 
 export interface PatchedStudent { 
     readonly id?: number;
+    password?: string;
     readonly created_at?: string;
     name?: string;
-    birth?: string | null;
-    level?: string;
     phone?: string;
     email?: string;
-    password?: string;
     img?: string | null;
 }
 

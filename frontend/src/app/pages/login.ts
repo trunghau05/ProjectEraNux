@@ -96,17 +96,17 @@ export class Login {
       email: this.email,
       password: this.password,
     };
-    // API call
+
     this.loginService.loginCreate(payload).subscribe({
       next: (res) => {
-        this.isLoading = false; 
         sessionStorage.setItem('user', JSON.stringify(res));        
+        this.isLoading = true; 
         alert('Login successful!');
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
-        this.isLoading = true;
         alert('Login failed: ' + err.message);
+        this.isLoading = false;
       }
     })
   }

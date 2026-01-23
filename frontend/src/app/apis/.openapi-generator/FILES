@@ -1,5 +1,4 @@
 .gitignore
-.openapi-generator-ignore
 README.md
 api.base.service.ts
 api.module.ts
@@ -22,7 +21,6 @@ model/bookingStatusEnum.ts
 model/class.ts
 model/classDetail.ts
 model/classStatusEnum.ts
-model/labelEnum.ts
 model/login.ts
 model/models.ts
 model/patchedBooking.ts
@@ -33,15 +31,18 @@ model/patchedSession.ts
 model/patchedStudent.ts
 model/patchedSubject.ts
 model/patchedTeacher.ts
+model/roleEnum.ts
 model/room.ts
 model/schedule.ts
 model/scheduleStatusEnum.ts
 model/session.ts
+model/sessionDetail.ts
 model/sessionStatusEnum.ts
 model/student.ts
 model/subject.ts
 model/teacher.ts
-model/typeEnum.ts
+model/timeSlot.ts
+model/timeSlotStatusEnum.ts
 param.ts
 provide-api.ts
 query.params.ts

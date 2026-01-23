@@ -16,9 +16,10 @@ export interface PatchedSession {
     start_at?: string;
     end_at?: string;
     status?: SessionStatusEnum;
-    class_obj?: number;
+    class_obj?: number | null;
+    time_slot?: number | null;
+    student?: number | null;
     teacher?: number;
-    booking?: number | null;
 }
 export namespace PatchedSession {
 }

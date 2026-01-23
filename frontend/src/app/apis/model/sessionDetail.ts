@@ -8,20 +8,24 @@
  * Do not edit the class manually.
  */
 import { SessionStatusEnum } from './sessionStatusEnum';
+import { Teacher } from './teacher';
+import { Class } from './class';
+import { Student } from './student';
+import { TimeSlot } from './timeSlot';
 
 
-export interface Session { 
+export interface SessionDetail { 
     readonly id: number;
+    readonly class_obj: Class;
+    readonly teacher: Teacher;
+    readonly time_slot: TimeSlot;
+    readonly student: Student;
     readonly created_at: string;
     start_at: string;
     end_at: string;
     status?: SessionStatusEnum;
-    class_obj?: number | null;
-    time_slot?: number | null;
-    student?: number | null;
-    teacher: number;
 }
-export namespace Session {
+export namespace SessionDetail {
 }
 
 

@@ -1,0 +1,241 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    COLOR PALETTE - ProjectEraNux
+           Bộ màu sắc toàn diện cho dự án quản lý lớp học online
+═══════════════════════════════════════════════════════════════════════════════
+
+🌙 DARK MODE COLOR SCHEME
+─────────────────────────────────────────────────────────────────────────────
+
+Dark Mode - Cool Colors:
+  Dark Blue BG          #0f172a      RGB(15, 23, 42)
+  Dark Slate            #1e293b      RGB(30, 41, 59)
+  Card Dark             #1a1f35      RGB(26, 31, 53)
+  Accent Blue           #3b82f6      RGB(59, 130, 246)
+  Text Primary          #f1f5f9      RGB(241, 245, 249)
+  Text Secondary        #cbd5e1      RGB(203, 213, 225)
+
+Dark Mode - Warm Colors:
+  Dark Red Accent       #ef4444      RGB(239, 68, 68)
+  Dark Orange Accent    #f97316      RGB(249, 115, 22)
+  Dark Amber Accent     #fbbf24      RGB(251, 191, 36)
+  Dark Green Accent     #22c55e      RGB(34, 197, 94)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+☀️  LIGHT MODE COLOR SCHEME
+─────────────────────────────────────────────────────────────────────────────
+
+Light Mode - Cool Colors:
+  Light Blue BG         #f0f9ff      RGB(240, 249, 255)
+  White BG              #ffffff      RGB(255, 255, 255)
+  Card Light            #f8fafc      RGB(248, 250, 252)
+  Accent Blue           #1e3a8a      RGB(30, 58, 138)
+  Text Primary          #1f2937      RGB(31, 41, 55)
+  Text Secondary        #6b7280      RGB(107, 114, 128)
+
+Light Mode - Warm Colors:
+  Light Red Accent      #dc2626      RGB(220, 38, 38)
+  Light Orange Accent   #ea580c      RGB(234, 88, 12)
+  Light Amber Accent    #d97706      RGB(217, 119, 6)
+  Light Green Accent    #15803d      RGB(21, 128, 61)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎨 MÀU LẠNH (COOL COLORS)
+─────────────────────────────────────────────────────────────────────────────
+
+▶ Xanh Dương (Blues):
+  Primary Blue          #1e3a8a      RGB(30, 58, 138)
+  Light Blue            #3b82f6      RGB(59, 130, 246)
+  Sky Blue              #0ea5e9      RGB(14, 165, 233)
+  Cyan                  #06b6d4      RGB(6, 182, 212)
+  Pastel Blue           #bfdbfe      RGB(191, 219, 254)
+  Light Pastel Blue     #dbeafe      RGB(219, 234, 254)
+
+▶ Xanh Lá (Greens):
+  Emerald               #10b981      RGB(16, 185, 129)
+  Green                 #22c55e      RGB(34, 197, 94)
+  Light Green           #4ade80      RGB(74, 222, 128)
+  Teal                  #14b8a6      RGB(20, 184, 166)
+  Pastel Green          #bbf7d0      RGB(187, 247, 208)
+  Light Pastel Green    #dcfce7      RGB(220, 252, 231)
+
+▶ Tím/Violet (Purples):
+  Purple                #a855f7      RGB(168, 85, 247)
+  Violet                #8b5cf6      RGB(139, 92, 246)
+  Indigo                #4f46e5      RGB(79, 70, 229)
+  Deep Purple           #6d28d9      RGB(109, 40, 217)
+  Pastel Purple         #e9d5ff      RGB(233, 213, 255)
+  Light Pastel Purple   #f3e8ff      RGB(243, 232, 255)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔥 MÀU NÓNG (WARM COLORS)
+─────────────────────────────────────────────────────────────────────────────
+
+▶ Đỏ (Reds):
+  Red                   #dc2626      RGB(220, 38, 38)
+  Light Red             #ef4444      RGB(239, 68, 68)
+  Rose                  #f43f5e      RGB(244, 63, 94)
+  Crimson               #e11d48      RGB(225, 29, 72)
+  Pastel Red            #fecaca      RGB(254, 202, 202)
+  Light Pastel Red      #fee2e2      RGB(254, 226, 226)
+
+▶ Cam (Oranges):
+  Orange                #f97316      RGB(249, 115, 22)
+  Light Orange          #fb923c      RGB(251, 146, 60)
+  Deep Orange           #ea580c      RGB(234, 88, 12)
+  Amber                 #f59e0b      RGB(245, 158, 11)
+  Pastel Orange         #fed7aa      RGB(254, 215, 170)
+  Light Pastel Orange   #ffedd5      RGB(255, 237, 213)
+
+▶ Vàng (Yellows):
+  Yellow                #eab308      RGB(234, 179, 8)
+  Light Yellow          #facc15      RGB(250, 204, 21)
+  Gold                  #fbbf24      RGB(251, 191, 36)
+  Deep Yellow           #ca8a04      RGB(202, 138, 4)
+  Pastel Yellow         #fef08a      RGB(254, 240, 138)
+  Light Pastel Yellow   #fefce8      RGB(254, 252, 232)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🍬 PASTEL COLOR PALETTE
+─────────────────────────────────────────────────────────────────────────────
+
+Pastel Cool:
+  Pastel Blue           #bfdbfe      RGB(191, 219, 254)
+  Pastel Cyan           #cffafe      RGB(207, 250, 254)
+  Pastel Green          #bbf7d0      RGB(187, 247, 208)
+  Pastel Teal           #99f6e4      RGB(153, 246, 228)
+  Pastel Purple         #e9d5ff      RGB(233, 213, 255)
+  Pastel Indigo         #e0e7ff      RGB(224, 231, 255)
+
+Pastel Warm:
+  Pastel Red            #fecaca      RGB(254, 202, 202)
+  Pastel Pink           #fbcfe8      RGB(251, 207, 232)
+  Pastel Orange         #fed7aa      RGB(254, 215, 170)
+  Pastel Yellow         #fef08a      RGB(254, 240, 138)
+  Pastel Rose           #fce7f3      RGB(252, 231, 243)
+  Pastel Amber          #fcd34d      RGB(252, 211, 77)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+⚪ MÀU TRUNG TÍNH (NEUTRAL COLORS)
+─────────────────────────────────────────────────────────────────────────────
+
+  White                 #ffffff      RGB(255, 255, 255)    - Nền chính
+  Light Gray            #f3f4f6      RGB(243, 244, 246)    - Nền phụ
+  Gray                  #9ca3af      RGB(156, 163, 175)    - Text phụ
+  Dark Gray             #374151      RGB(55, 65, 81)       - Text chính
+  Black                 #1f2937      RGB(31, 41, 55)       - Text đậm
+  Charcoal              #111827      RGB(17, 24, 39)       - Text rất đậm
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🌈 GRADIENT COMBINATIONS
+─────────────────────────────────────────────────────────────────────────────
+
+Gradient Lạnh:
+  Blue to Cyan          linear-gradient(135deg, #1e3a8a 0%, #0ea5e9 100%)
+  Blue to Purple        linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)
+  Green to Teal         linear-gradient(135deg, #10b981 0%, #14b8a6 100%)
+  Cyan to Green         linear-gradient(135deg, #06b6d4 0%, #22c55e 100%)
+
+Gradient Nóng:
+  Orange to Red         linear-gradient(135deg, #f97316 0%, #dc2626 100%)
+  Amber to Orange       linear-gradient(135deg, #f59e0b 0%, #f97316 100%)
+  Red to Pink           linear-gradient(135deg, #dc2626 0%, #f43f5e 100%)
+  Yellow to Orange      linear-gradient(135deg, #eab308 0%, #f97316 100%)
+
+Gradient Hỗn Hợp:
+  Cool to Warm          linear-gradient(135deg, #1e3a8a 0%, #f97316 100%)
+  Purple to Pink to Red linear-gradient(90deg, #8b5cf6 0%, #f43f5e 50%, #dc2626 100%)
+  Green to Yellow       linear-gradient(90deg, #10b981 0%, #eab308 50%, #f97316 100%)
+  Aqua to Purple        linear-gradient(135deg, #06b6d4 0%, #a855f7 100%)
+
+Pastel Gradients:
+  Pastel Blue→Purple    linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%)
+  Pastel Green→Cyan     linear-gradient(135deg, #dcfce7 0%, #cffafe 100%)
+  Pastel Pink→Yellow    linear-gradient(135deg, #fbcfe8 0%, #fef08a 100%)
+  Pastel Orange→Red     linear-gradient(135deg, #fed7aa 0%, #fecaca 100%)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 KHUYẾN NGHỊ SỬ DỤNG
+─────────────────────────────────────────────────────────────────────────────
+
+▶ Cho Header/Navigation:
+  - Sử dụng: Primary Blue (#1e3a8a) hoặc gradient cool (#1e3a8a → #0ea5e9)
+  - Text: White (#ffffff)
+
+▶ Cho Buttons (Call-to-Action):
+  - Primary: Emerald (#10b981) hoặc Light Green (#22c55e)
+  - Secondary: Light Blue (#3b82f6)
+  - Danger: Red (#dc2626)
+  - Warning: Amber (#f59e0b)
+
+▶ Cho Cards/Sections:
+  - Background: White (#ffffff) hoặc Light Gray (#f3f4f6)
+  - Border: Light Blue Pastel (#dbeafe) hoặc Light Green Pastel (#dcfce7)
+
+▶ Cho Accent/Highlights:
+  - Sử dụng pastel colors để làm highlight nhẹ
+  - Gradient colors cho hero sections
+  - Warm colors cho promotional content
+
+▶ Cho Status Indicators:
+  Status  │  Màu    │  Hex Code
+  ────────┼─────────┼──────────
+  Success │ Green   │ #22c55e
+  Warning │ Amber   │ #f59e0b
+  Error   │ Red     │ #dc2626
+  Info    │ Blue    │ #3b82f6
+  Pending │ Purple  │ #a855f7
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 CSS VARIABLES (SCSS/CSS)
+─────────────────────────────────────────────────────────────────────────────
+
+// Cool Colors
+$primary-blue: #1e3a8a;
+$light-blue: #3b82f6;
+$sky-blue: #0ea5e9;
+$cyan: #06b6d4;
+
+// Warm Colors
+$primary-red: #dc2626;
+$light-red: #ef4444;
+$orange: #f97316;
+$amber: #f59e0b;
+$yellow: #eab308;
+
+// Green & Teal
+$emerald: #10b981;
+$green: #22c55e;
+$teal: #14b8a6;
+
+// Purple & Violet
+$purple: #a855f7;
+$violet: #8b5cf6;
+$indigo: #4f46e5;
+
+// Pastels
+$pastel-blue: #bfdbfe;
+$pastel-green: #bbf7d0;
+$pastel-purple: #e9d5ff;
+$pastel-red: #fecaca;
+$pastel-orange: #fed7aa;
+$pastel-yellow: #fef08a;
+
+// Neutral
+$white: #ffffff;
+$light-gray: #f3f4f6;
+$gray: #9ca3af;
+$dark-gray: #374151;
+$black: #1f2937;
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Last Updated: January 2026
+Project: ProjectEraNux - Educational Management System

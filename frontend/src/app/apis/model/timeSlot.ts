@@ -7,18 +7,18 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { BookingStatusEnum } from './bookingStatusEnum';
+import { TimeSlotStatusEnum } from './timeSlotStatusEnum';
 
 
-export interface Booking { 
+export interface TimeSlot { 
     readonly id: number;
     readonly created_at: string;
-    status?: BookingStatusEnum;
+    start_at: string;
+    end_at: string;
+    status?: TimeSlotStatusEnum;
     teacher: number;
-    time_slot: number;
-    student: number;
 }
-export namespace Booking {
+export namespace TimeSlot {
 }
 
 

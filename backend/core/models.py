@@ -16,8 +16,6 @@ class TimeStampedModel(models.Model):
 # =========================
 class Student(TimeStampedModel):
     name = models.CharField(max_length=100)
-    birth = models.DateField(null=True, blank=True)
-    level = models.CharField(max_length=50, blank=True)
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
@@ -34,20 +32,19 @@ class Teacher(TimeStampedModel):
     TUTOR = 'tutor'
     TEACHER = 'teacher'
 
-    LABEL_CHOICES = [
+    ROLE_CHOICES = [
         (TUTOR, 'Tutor'),
         (TEACHER, 'Teacher'),
     ]
 
     name = models.CharField(max_length=100)
     bio = models.TextField(blank=True, null=True)
-    birth = models.DateField(null=True, blank=True)
-    label = models.CharField(max_length=10, choices=LABEL_CHOICES)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     phone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
-    img = models.CharField(max_length=255, blank=True)
-    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    img = models.CharField(max_length=255, blank=True, null=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=2, default=0, null=True)
 
     class Meta:
         db_table = 'teacher'
@@ -65,25 +62,19 @@ class Subject(TimeStampedModel):
 
 
 # =========================
-# CLASS (LỚP HỌC)
+# CLASS 
 # =========================
 class Class(TimeStampedModel):
-    ONLINE = 'online'
-    OFFLINE = 'offline'
-
-    TYPE_CHOICES = [
-        (ONLINE, 'Online'),
-        (OFFLINE, 'Offline'),
-    ]
-
-    ACTIVE = 'active'
-    INACTIVE = 'inactive'
-    COMPLETED = 'completed'
+    OPEN = 'open'
+    CLOSED = 'closed'
+    COMPLETE = 'complete'
+    FULL = 'full'
 
     STATUS_CHOICES = [
-        (ACTIVE, 'Active'),
-        (INACTIVE, 'Inactive'),
-        (COMPLETED, 'Completed'),
+        (OPEN, 'Open'),
+        (CLOSED, 'Closed'),
+        (COMPLETE, 'Complete'),
+        (FULL, 'Full'),
     ]
 
     subject = models.ForeignKey(
@@ -96,14 +87,13 @@ class Class(TimeStampedModel):
         on_delete=models.CASCADE
     )
 
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     level = models.CharField(max_length=50, blank=True)
     max_students = models.PositiveIntegerField(default=30)
     description = models.TextField(blank=True)
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
-        default=ACTIVE
+        default=OPEN
     )
 
     class Meta:
@@ -136,12 +126,10 @@ class InClass(models.Model):
 class TimeSlot(TimeStampedModel):
     AVAILABLE = 'available'
     BOOKED = 'booked'
-    EXPIRED = 'expired'
 
     STATUS_CHOICES = [
         (AVAILABLE, 'Available'),
         (BOOKED, 'Booked'),
-        (EXPIRED, 'Expired'),
     ]
 
     teacher = models.ForeignKey(
@@ -176,6 +164,11 @@ class Booking(TimeStampedModel):
         (CANCELLED, 'Cancelled'),
     ]
 
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE
+    )
+
     time_slot = models.ForeignKey(
         TimeSlot,
         on_delete=models.CASCADE
@@ -184,12 +177,6 @@ class Booking(TimeStampedModel):
     student = models.ForeignKey(
         Student,
         on_delete=models.CASCADE
-    )
-
-    class_obj = models.ForeignKey(
-        Class,
-        on_delete=models.CASCADE,
-        db_column='class_id'
     )
 
     status = models.CharField(
@@ -208,7 +195,7 @@ class Booking(TimeStampedModel):
 class Schedule(TimeStampedModel):
     ACTIVE = 'active'
     INACTIVE = 'inactive'
-
+  
     STATUS_CHOICES = [
         (ACTIVE, 'Active'),
         (INACTIVE, 'Inactive'),
@@ -253,19 +240,28 @@ class Session(TimeStampedModel):
     class_obj = models.ForeignKey(
         Class,
         on_delete=models.CASCADE,
-        db_column='class_id'
+        db_column='class_id',
+        null=True,
+        blank=True
+    )
+
+    time_slot = models.ForeignKey(
+        TimeSlot,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
     )
 
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.CASCADE
-    )
-
-    booking = models.ForeignKey(
-        Booking,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
     )
 
     start_at = models.DateTimeField()
@@ -294,3 +290,84 @@ class Room(TimeStampedModel):
 
     class Meta:
         db_table = 'room'
+
+
+# =========================
+# FEE
+# =========================
+class Fee(TimeStampedModel):
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE
+    )
+
+    class_obj = models.ForeignKey(
+        Class,
+        on_delete=models.CASCADE,
+        db_column='class_id',
+        null=True,
+        blank=True
+    )
+
+    time_slot = models.ForeignKey(
+        TimeSlot,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = 'fee'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['teacher', 'class_obj'],
+                condition=models.Q(time_slot__isnull=True),
+                name='unique_teacher_class_fee'
+            ),
+            models.UniqueConstraint(
+                fields=['teacher', 'time_slot'],
+                condition=models.Q(class_obj__isnull=True),
+                name='unique_teacher_timeslot_fee'
+            ),
+        ]
+
+
+# =========================
+# PAYMENT
+# =========================
+class Payment(TimeStampedModel):
+    PENDING = 'pending'
+    COMPLETED = 'completed'
+    CANCELLED = 'cancelled'
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (COMPLETED, 'Completed'),
+        (CANCELLED, 'Cancelled'),
+    ]
+
+    session = models.ForeignKey(
+        Session,
+        on_delete=models.CASCADE
+    )
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE
+    )
+
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    period = models.CharField(max_length=10)  # YYYY-MM format
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default=PENDING
+    )
+    paid_date = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = 'payment'
+        unique_together = ('teacher', 'period')

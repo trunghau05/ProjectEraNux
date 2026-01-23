@@ -9,13 +9,12 @@
  */
 
 
-export interface Student { 
-    readonly id: number;
-    password: string;
-    readonly created_at: string;
-    name: string;
-    phone?: string;
-    email: string;
-    img?: string | null;
-}
+/**
+ * * `tutor` - Tutor * `teacher` - Teacher
+ */
+export const RoleEnum = {
+    Tutor: 'tutor',
+    Teacher: 'teacher'
+} as const;
+export type RoleEnum = typeof RoleEnum[keyof typeof RoleEnum];
 

@@ -14,9 +14,9 @@ export interface PatchedBooking {
     readonly id?: number;
     readonly created_at?: string;
     status?: BookingStatusEnum;
+    teacher?: number;
     time_slot?: number;
     student?: number;
-    class_obj?: number;
 }
 export namespace PatchedBooking {
 }

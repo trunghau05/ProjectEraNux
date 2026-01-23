@@ -7,14 +7,12 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { TypeEnum } from './typeEnum';
 import { ClassStatusEnum } from './classStatusEnum';
 
 
 export interface Class { 
     readonly id: number;
     readonly created_at: string;
-    type: TypeEnum;
     level?: string;
     max_students?: number;
     description?: string;

@@ -8,7 +8,6 @@
  * Do not edit the class manually.
  */
 import { Teacher } from './teacher';
-import { TypeEnum } from './typeEnum';
 import { ClassStatusEnum } from './classStatusEnum';
 import { Subject } from './subject';
 
@@ -18,7 +17,6 @@ export interface ClassDetail {
     readonly subject: Subject;
     readonly teacher: Teacher;
     readonly created_at: string;
-    type: TypeEnum;
     level?: string;
     max_students?: number;
     description?: string;

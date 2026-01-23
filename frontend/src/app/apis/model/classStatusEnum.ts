@@ -10,12 +10,13 @@
 
 
 /**
- * * `active` - Active * `inactive` - Inactive * `completed` - Completed
+ * * `open` - Open * `closed` - Closed * `complete` - Complete * `full` - Full
  */
 export const ClassStatusEnum = {
-    Active: 'active',
-    Inactive: 'inactive',
-    Completed: 'completed'
+    Open: 'open',
+    Closed: 'closed',
+    Complete: 'complete',
+    Full: 'full'
 } as const;
 export type ClassStatusEnum = typeof ClassStatusEnum[keyof typeof ClassStatusEnum];
 

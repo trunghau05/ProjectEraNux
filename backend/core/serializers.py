@@ -6,6 +6,8 @@ from .models import *
 # STUDENT
 # =========================
 class StudentSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    
     class Meta:
         model = Student
         fields = '__all__'
@@ -25,6 +27,8 @@ class StudentSerializer(serializers.ModelSerializer):
 # TEACHER
 # =========================
 class TeacherSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    
     class Meta:
         model = Teacher
         fields = '__all__'
@@ -115,7 +119,7 @@ class BookingSerializer(serializers.ModelSerializer):
 class BookingDetailSerializer(serializers.ModelSerializer):
     student = StudentSerializer(read_only=True)
     time_slot = TimeSlotSerializer(read_only=True)
-    class_obj = ClassSerializer(read_only=True)
+    teacher = TeacherSerializer(read_only=True)
 
     class Meta:
         model = Booking
@@ -151,7 +155,8 @@ class SessionSerializer(serializers.ModelSerializer):
 class SessionDetailSerializer(serializers.ModelSerializer):
     class_obj = ClassSerializer(read_only=True)
     teacher = TeacherSerializer(read_only=True)
-    booking = BookingSerializer(read_only=True)
+    time_slot = TimeSlotSerializer(read_only=True)
+    student = StudentSerializer(read_only=True)
 
     class Meta:
         model = Session
@@ -172,6 +177,43 @@ class RoomDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Room
+        fields = '__all__'
+
+
+# =========================
+# FEE
+# =========================
+class FeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fee
+        fields = '__all__'
+
+
+class FeeDetailSerializer(serializers.ModelSerializer):
+    teacher = TeacherSerializer(read_only=True)
+    class_obj = ClassSerializer(read_only=True)
+    time_slot = TimeSlotSerializer(read_only=True)
+
+    class Meta:
+        model = Fee
+        fields = '__all__'
+
+
+# =========================
+# PAYMENT
+# =========================
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = '__all__'
+
+
+class PaymentDetailSerializer(serializers.ModelSerializer):
+    session = SessionDetailSerializer(read_only=True)
+    teacher = TeacherSerializer(read_only=True)
+
+    class Meta:
+        model = Payment
         fields = '__all__'
 
 # =========================
@@ -200,7 +242,7 @@ class LoginSerializer(serializers.Serializer):
             if self._check_and_upgrade_password(teacher, raw_password):
                 return {
                     'id': teacher.id,
-                    'role': teacher.label
+                    'role': teacher.role
                 }
 
         raise serializers.ValidationError('Invalid email or password')

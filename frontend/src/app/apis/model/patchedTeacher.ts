@@ -7,21 +7,20 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { LabelEnum } from './labelEnum';
+import { RoleEnum } from './roleEnum';
 
 
 export interface PatchedTeacher { 
     readonly id?: number;
+    password?: string;
     readonly created_at?: string;
     name?: string;
     bio?: string | null;
-    birth?: string | null;
-    label?: LabelEnum;
+    role?: RoleEnum;
     phone?: string;
     email?: string;
-    password?: string;
-    img?: string;
-    rating?: string;
+    img?: string | null;
+    rating?: string | null;
 }
 export namespace PatchedTeacher {
 }
