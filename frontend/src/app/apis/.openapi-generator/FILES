@@ -17,6 +17,7 @@ encoder.ts
 git_push.sh
 index.ts
 model/booking.ts
+model/bookingDetail.ts
 model/bookingStatusEnum.ts
 model/class.ts
 model/classDetail.ts
@@ -31,9 +32,10 @@ model/patchedSession.ts
 model/patchedStudent.ts
 model/patchedSubject.ts
 model/patchedTeacher.ts
-model/roleEnum.ts
 model/room.ts
+model/roomDetail.ts
 model/schedule.ts
+model/scheduleDetail.ts
 model/scheduleStatusEnum.ts
 model/session.ts
 model/sessionDetail.ts
@@ -41,6 +43,7 @@ model/sessionStatusEnum.ts
 model/student.ts
 model/subject.ts
 model/teacher.ts
+model/teacherRoleEnum.ts
 model/timeSlot.ts
 model/timeSlotStatusEnum.ts
 param.ts

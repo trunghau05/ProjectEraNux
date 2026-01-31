@@ -2,12 +2,13 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { LoginService } from '../apis';
 
 @Component({
   standalone: true,
   selector: 'app-login',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, MatIconModule],
   template: `
     <div class="auth-container">
       <style>
@@ -25,6 +26,11 @@ import { LoginService } from '../apis';
         .socials{display:flex; gap:8px; justify-content:center}
         .socials button{padding:8px 12px; border:1px solid #e3e8ef; border-radius:6px; background:#fff; cursor:pointer}
         .muted{color:#666;font-size:12px;text-align:center}
+        .password-wrapper{position:relative; display:flex; align-items:center}
+        .password-wrapper input{flex:1; padding-right:40px}
+        .eye-icon{position:absolute; right:12px; cursor:pointer; color:#999; user-select:none; font-size:15px; width:15px; height:15px}
+        .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
         .img {flex:1; display:flex; justify-content:center; align-items:flex-end; margin-top:12px}
         .img img {max-width:100%; height:auto;}
         @media(max-width:760px){
@@ -50,8 +56,19 @@ import { LoginService } from '../apis';
           <h3>Sign in to EraNux</h3>
           <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="form-row">
             <input [(ngModel)]="email" name="email" type="email" placeholder="Email address" required class="field" />
-            <input [(ngModel)]="password" name="password" type="password" placeholder="Password" required class="field" />
-
+            <div class="password-wrapper">
+              <input [(ngModel)]="password" name="password" [type]="showPassword ? 'text' : 'password'" placeholder="Password" required class="field" />
+              <mat-icon class="eye-icon" (click)="showPassword = !showPassword">{{ showPassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </div>
+            
+            <button type="submit" [disabled]="isLoading" class="primary" style="display:flex;align-items:center;justify-content:center;gap:8px">
+              @if (isLoading) {
+                <div class="spinner"></div>
+              } @else {
+                Log in
+              }
+            </button>
+            
             <div class="actions">
               <label style="display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" [(ngModel)]="remember" name="remember" style="width:16px; height:16px;" />
@@ -59,8 +76,6 @@ import { LoginService } from '../apis';
               </label>
               <a routerLink="/forgot" style="color:#6b46c1; text-decoration:none; font-size:12px">Forgot password?</a>
             </div>
-
-            <button type="submit" [disabled]="isLoading" class="primary">{{ isLoading ? 'Logging in...' : 'Log in' }}</button>
           </form>
 
           <div class="muted">Or sign in with</div>
@@ -84,14 +99,11 @@ export class Login {
   password = '';
   remember = false;
   isLoading = false;
+  showPassword = false;
 
   onSubmit() {
-    if (!this.email || !this.password) {
-      alert('Please enter email and password');
-      return;
-    }
-
     this.isLoading = true;
+    
     const payload = {
       email: this.email,
       password: this.password,
@@ -100,13 +112,13 @@ export class Login {
     this.loginService.loginCreate(payload).subscribe({
       next: (res) => {
         sessionStorage.setItem('user', JSON.stringify(res));        
-        this.isLoading = true; 
+        this.isLoading = false;
         alert('Login successful!');
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
-        alert('Login failed: ' + err.message);
-        this.isLoading = false;
+        this.isLoading = false;        
+        alert(err.error.message);
       }
     })
   }

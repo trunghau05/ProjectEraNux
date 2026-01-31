@@ -21,7 +21,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Booking'
+                  $ref: '#/components/schemas/BookingDetail'
           description: ''
     post:
       operationId: bookings_create
@@ -73,7 +73,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
+                $ref: '#/components/schemas/BookingDetail'
           description: ''
     put:
       operationId: bookings_update
@@ -187,7 +187,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Class'
+                  $ref: '#/components/schemas/ClassDetail'
           description: ''
     post:
       operationId: classes_create
@@ -433,7 +433,12 @@ paths:
   /api/login/:
     post:
       operationId: login_create
-      description: Authentication API
+      description: |-
+        Login endpoint with detailed error messages
+        Returns:
+            - 200: Login successful
+            - 400: Invalid login information
+            - 401: Incorrect password or email not found
       tags:
       - login
       requestBody:
@@ -472,7 +477,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Room'
+                  $ref: '#/components/schemas/RoomDetail'
           description: ''
     post:
       operationId: rooms_create
@@ -524,7 +529,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Room'
+                $ref: '#/components/schemas/RoomDetail'
           description: ''
     put:
       operationId: rooms_update
@@ -631,7 +636,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Schedule'
+                  $ref: '#/components/schemas/ScheduleDetail'
           description: ''
     post:
       operationId: schedules_create
@@ -683,7 +688,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Schedule'
+                $ref: '#/components/schemas/ScheduleDetail'
           description: ''
     put:
       operationId: schedules_update
@@ -795,7 +800,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Session'
+                  $ref: '#/components/schemas/SessionDetail'
           description: ''
     post:
       operationId: sessions_create
@@ -857,7 +862,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                $ref: '#/components/schemas/SessionDetail'
           description: ''
     put:
       operationId: sessions_update
@@ -1425,6 +1430,7 @@ paths:
         - PUT    /api/teachers/{id}/
         - PATCH  /api/teachers/{id}/
         - DELETE /api/teachers/{id}/
+        - GET    /api/teachers/tutors/  (List all tutors)
       tags:
       - teachers
       security:
@@ -1450,6 +1456,7 @@ paths:
         - PUT    /api/teachers/{id}/
         - PATCH  /api/teachers/{id}/
         - DELETE /api/teachers/{id}/
+        - GET    /api/teachers/tutors/  (List all tutors)
       tags:
       - teachers
       requestBody:
@@ -1486,6 +1493,7 @@ paths:
         - PUT    /api/teachers/{id}/
         - PATCH  /api/teachers/{id}/
         - DELETE /api/teachers/{id}/
+        - GET    /api/teachers/tutors/  (List all tutors)
       parameters:
       - in: path
         name: id
@@ -1516,6 +1524,7 @@ paths:
         - PUT    /api/teachers/{id}/
         - PATCH  /api/teachers/{id}/
         - DELETE /api/teachers/{id}/
+        - GET    /api/teachers/tutors/  (List all tutors)
       parameters:
       - in: path
         name: id
@@ -1558,6 +1567,7 @@ paths:
         - PUT    /api/teachers/{id}/
         - PATCH  /api/teachers/{id}/
         - DELETE /api/teachers/{id}/
+        - GET    /api/teachers/tutors/  (List all tutors)
       parameters:
       - in: path
         name: id
@@ -1599,6 +1609,7 @@ paths:
         - PUT    /api/teachers/{id}/
         - PATCH  /api/teachers/{id}/
         - DELETE /api/teachers/{id}/
+        - GET    /api/teachers/tutors/  (List all tutors)
       parameters:
       - in: path
         name: id
@@ -1615,6 +1626,25 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/teachers/tutors/:
+    get:
+      operationId: teachers_tutors_list
+      description: Get list of all tutors
+      tags:
+      - teachers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Teacher'
+          description: ''
 components:
   schemas:
     Booking:
@@ -1635,6 +1665,36 @@ components:
           type: integer
         student:
           type: integer
+      required:
+      - created_at
+      - id
+      - student
+      - teacher
+      - time_slot
+    BookingDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        student:
+          allOf:
+          - $ref: '#/components/schemas/Student'
+          readOnly: true
+        time_slot:
+          allOf:
+          - $ref: '#/components/schemas/TimeSlot'
+          readOnly: true
+        teacher:
+          allOf:
+          - $ref: '#/components/schemas/Teacher'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/BookingStatusEnum'
       required:
       - created_at
       - id
@@ -1915,7 +1975,7 @@ components:
           type: string
           nullable: true
         role:
-          $ref: '#/components/schemas/RoleEnum'
+          $ref: '#/components/schemas/TeacherRoleEnum'
         phone:
           type: string
           maxLength: 20
@@ -1932,14 +1992,6 @@ components:
           format: decimal
           pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
           nullable: true
-    RoleEnum:
-      enum:
-      - tutor
-      - teacher
-      type: string
-      description: |-
-        * `tutor` - Tutor
-        * `teacher` - Teacher
     Room:
       type: object
       properties:
@@ -1955,6 +2007,28 @@ components:
           maxLength: 100
         session:
           type: integer
+      required:
+      - created_at
+      - id
+      - room_code
+      - session
+    RoomDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        session:
+          allOf:
+          - $ref: '#/components/schemas/SessionDetail'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        room_code:
+          type: string
+          maxLength: 100
       required:
       - created_at
       - id
@@ -1984,6 +2058,39 @@ components:
           $ref: '#/components/schemas/ScheduleStatusEnum'
         class_obj:
           type: integer
+      required:
+      - class_obj
+      - created_at
+      - day_of_week
+      - end_time
+      - id
+      - start_time
+    ScheduleDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        class_obj:
+          allOf:
+          - $ref: '#/components/schemas/Class'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        day_of_week:
+          type: integer
+          maximum: 65535
+          minimum: 0
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        status:
+          $ref: '#/components/schemas/ScheduleStatusEnum'
       required:
       - class_obj
       - created_at
@@ -2161,7 +2268,7 @@ components:
           type: string
           nullable: true
         role:
-          $ref: '#/components/schemas/RoleEnum'
+          $ref: '#/components/schemas/TeacherRoleEnum'
         phone:
           type: string
           maxLength: 20
@@ -2185,6 +2292,14 @@ components:
       - name
       - password
       - role
+    TeacherRoleEnum:
+      enum:
+      - tutor
+      - teacher
+      type: string
+      description: |-
+        * `tutor` - Tutor
+        * `teacher` - Teacher
     TimeSlot:
       type: object
       properties:

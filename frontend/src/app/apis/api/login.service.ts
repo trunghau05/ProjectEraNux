@@ -36,7 +36,7 @@ export class LoginService extends BaseService {
     }
 
     /**
-     * Authentication API
+     * Login endpoint with detailed error messages Returns:     - 200: Login successful     - 400: Invalid login information     - 401: Incorrect password or email not found
      * @endpoint post /api/login/
      * @param login 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.

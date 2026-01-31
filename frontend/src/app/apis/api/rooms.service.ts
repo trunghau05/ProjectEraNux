@@ -20,6 +20,8 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 import { PatchedRoom } from '../model/patchedRoom';
 // @ts-ignore
 import { Room } from '../model/room';
+// @ts-ignore
+import { RoomDetail } from '../model/roomDetail';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -177,9 +179,9 @@ export class RoomsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public roomsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<Room>>;
-    public roomsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<Room>>>;
-    public roomsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<Room>>>;
+    public roomsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<RoomDetail>>;
+    public roomsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<RoomDetail>>>;
+    public roomsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<RoomDetail>>>;
     public roomsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
@@ -214,7 +216,7 @@ export class RoomsService extends BaseService {
 
         let localVarPath = `/api/rooms/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<Room>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<RoomDetail>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -309,9 +311,9 @@ export class RoomsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public roomsRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Room>;
-    public roomsRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Room>>;
-    public roomsRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Room>>;
+    public roomsRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RoomDetail>;
+    public roomsRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RoomDetail>>;
+    public roomsRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RoomDetail>>;
     public roomsRetrieve(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling roomsRetrieve.');
@@ -349,7 +351,7 @@ export class RoomsService extends BaseService {
 
         let localVarPath = `/api/rooms/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Room>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<RoomDetail>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

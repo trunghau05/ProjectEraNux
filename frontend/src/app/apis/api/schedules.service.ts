@@ -20,6 +20,8 @@ import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 import { PatchedSchedule } from '../model/patchedSchedule';
 // @ts-ignore
 import { Schedule } from '../model/schedule';
+// @ts-ignore
+import { ScheduleDetail } from '../model/scheduleDetail';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -177,9 +179,9 @@ export class SchedulesService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public schedulesList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<Schedule>>;
-    public schedulesList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<Schedule>>>;
-    public schedulesList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<Schedule>>>;
+    public schedulesList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ScheduleDetail>>;
+    public schedulesList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ScheduleDetail>>>;
+    public schedulesList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ScheduleDetail>>>;
     public schedulesList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
@@ -214,7 +216,7 @@ export class SchedulesService extends BaseService {
 
         let localVarPath = `/api/schedules/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<Schedule>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<ScheduleDetail>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -309,9 +311,9 @@ export class SchedulesService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public schedulesRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Schedule>;
-    public schedulesRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Schedule>>;
-    public schedulesRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Schedule>>;
+    public schedulesRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ScheduleDetail>;
+    public schedulesRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ScheduleDetail>>;
+    public schedulesRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ScheduleDetail>>;
     public schedulesRetrieve(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling schedulesRetrieve.');
@@ -349,7 +351,7 @@ export class SchedulesService extends BaseService {
 
         let localVarPath = `/api/schedules/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Schedule>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<ScheduleDetail>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

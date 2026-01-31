@@ -31,6 +31,7 @@ class ClassViewSet(ModelViewSet):
     # =========================
     def get_serializer_class(self):
         if self.action in [
+            'list',
             'retrieve',
             'by_student',
             'by_teacher'

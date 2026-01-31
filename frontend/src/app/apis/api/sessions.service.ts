@@ -301,9 +301,9 @@ export class SessionsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public sessionsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<Session>>;
-    public sessionsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<Session>>>;
-    public sessionsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<Session>>>;
+    public sessionsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<SessionDetail>>;
+    public sessionsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<SessionDetail>>>;
+    public sessionsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<SessionDetail>>>;
     public sessionsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
@@ -338,7 +338,7 @@ export class SessionsService extends BaseService {
 
         let localVarPath = `/api/sessions/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<Session>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<SessionDetail>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -433,9 +433,9 @@ export class SessionsService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public sessionsRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Session>;
-    public sessionsRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Session>>;
-    public sessionsRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Session>>;
+    public sessionsRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<SessionDetail>;
+    public sessionsRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<SessionDetail>>;
+    public sessionsRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<SessionDetail>>;
     public sessionsRetrieve(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
             throw new Error('Required parameter id was null or undefined when calling sessionsRetrieve.');
@@ -473,7 +473,7 @@ export class SessionsService extends BaseService {
 
         let localVarPath = `/api/sessions/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Session>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<SessionDetail>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

@@ -6,6 +6,7 @@ import { Chart, registerables  } from "chart.js";
 import { MatProgressBar } from "@angular/material/progress-bar";
 import { ClassDetail, ClassesService, SessionDetail, SessionsService } from "../apis";
 import { Router } from "@angular/router";
+import { UserService } from "../services/user.service";
 
 interface SessionByDate {
   date: string;        // 2026-01-08
@@ -61,7 +62,7 @@ interface SessionByDate {
         </style>
 
         <div class="box">
-            @if (user.role === 'student') {
+            @if (user().role === 'student') {
                 <div class="center">
                     <div class="title flex-betw">
                         <span>Dashboard</span>
@@ -194,7 +195,7 @@ interface SessionByDate {
 
                     <div class="label flex-betw mt-20">
                         <span>Your Bookings</span>
-                        <div class="flex-cen" style="gap: 10px;"> 
+                        <div class="flex-cen" style="gap: 10px; cursor: pointer;" (click)="navigateToBooking()"> 
                             <span>More</span>
                             <mat-icon>arrow_right_alt</mat-icon>
                         </div>
@@ -293,9 +294,235 @@ interface SessionByDate {
                 </div>
             }
     
-            @if (user.role === 'teacher' || user.role === 'tutor') {
+            @if (user().role === 'teacher' || user().role === 'tutor') {
                 <div class="center">
-        
+                    <div class="title flex-betw">
+                        <span>Dashboard</span>
+                        <div class="flex-cen" style="gap: 15px;">
+                            <p style="color: #acacacff; font-size: 12px;">{{ today | date:'fullDate'}}</p>
+                            <div class="ic flex-cen">
+                                <mat-icon>search</mat-icon>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart mt-20">
+                        <canvas id="dashboardLineChart"></canvas>
+                    </div>
+
+                    <div class="label flex-betw mt-20">
+                        <span>Your Cources</span>
+                        <div class="flex-cen" style="gap: 10px;"> 
+                            <span>More</span>
+                            <mat-icon>arrow_right_alt</mat-icon>
+                        </div>
+                    </div>
+
+                    <div class="card-container flex-cen mt-20">
+                        <div class="card-item flex-cen">
+                            <div class="icon flex-cen">
+                                <mat-icon>alarm</mat-icon>
+                            </div>
+                            <div class="subject flex-col">
+                                <span>Hours</span>
+                                <p>Description</p>
+                            </div>
+                            <div class="count flex-cen">
+                                08
+                            </div>
+                        </div>
+
+                        <div class="card-item flex-cen" style="background-color: white;">
+                            <div class="icon flex-cen" style="background-color: #8e82caff;">
+                                <mat-icon>folder_open</mat-icon>
+                            </div>
+                            <div class="subject flex-col">
+                                <span>Class</span>
+                                <p>Description</p>
+                            </div>
+                            <div class="count flex-cen">12</div>
+                        </div>
+
+                        <div class="card-item flex-cen" style="background-color: white;">
+                            <div class="icon flex-cen" style="background-color: #514fe3ff;">
+                                <mat-icon>event</mat-icon>
+                            </div>
+                            <div class="subject flex-col">
+                                <span>Session</span>
+                                <p>Description</p>
+                            </div>
+                            <div class="count flex-cen">03</div>
+                        </div>
+                        
+                        <div class="card-item flex-cen" style="background-color: white;">
+                            <div class="icon flex-cen" style="background-color: #bb295fff;">
+                                <mat-icon>mark_chat_unread</mat-icon>
+                            </div>
+                            <div class="subject flex-col">
+                                <span>Message</span>
+                                <p>Description</p>
+                            </div>
+                            <div class="count flex-cen">05</div>
+                        </div>
+                    </div>
+
+                    <div class="board-container mt-20">
+                        <div class="list board-item flex-col">
+                            <div class="board-label flex-betw">
+                                <span>Class Board</span>
+                                <div>
+                                    <mat-icon>arrow_right_alt</mat-icon>
+                                </div>
+                            </div>
+                            <div class="board flex-col">
+                                @for (c of classes(); track c.id) {
+                                    <div class="class-item flex-cen">
+                                        <div class="flex-col" style="width: 65%; gap: 5px;">
+                                            <span>{{ c.description }}</span>
+                                            <p>{{ c.teacher.name }}</p>
+                                        </div>
+                                        <div class="flex-cen" style="gap: 10px; width: 35%">
+                                            <mat-progress-bar
+                                                mode="determinate"
+                                                [value]="progressPercent">
+                                            </mat-progress-bar>
+                                            <span>{{ progressPercent }}%</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="schedule board-item flex-col">
+                            <div class="board-label flex-betw">
+                                <span>Schedule Board</span>
+                                <div>
+                                    <mat-icon>today</mat-icon>
+                                </div>
+                            </div>
+                            <div class="board mt-20">
+                                <div class="schedule-table">
+                                    <div class="schedule-row" style="display: flex; gap: 20px;">
+                                        @for (day of sessionsByDate(); track day.date) {
+                                            <div class="schedule-col flex-col" style="gap: 20px;">
+                                                <span>{{ day.displayDate }}</span>
+
+                                                @for (session of day.sessions; track session.id) {
+                                                    <div class="schedule-item" [ngClass]="getSessionClass(session)" style="gap: 5px; width: 100%; border-radius: 10px; padding: 10px; box-sizing: border-box;">
+                                                        <span style="color: white; font-weight: 500; font-size: 12px; text-align: left;">
+                                                            {{ session.student.name }} - {{ session.teacher.name }}
+                                                        </span>
+                                                        <p style="color: #f0f0f0ff; font-size: 11px; margin: 0;">
+                                                            {{ session.start_at | date:'HH:mm' }} - {{ session.end_at | date:'HH:mm' }} 
+                                                        </p>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="label flex-betw mt-20">
+                        <span>Your Bookings</span>
+                        <div class="flex-cen" style="gap: 10px; cursor: pointer;" (click)="navigateToBooking()"> 
+                            <span>More</span>
+                            <mat-icon>arrow_right_alt</mat-icon>
+                        </div>
+                    </div>
+                    <div class="booking mt-20 flex-cen" style="gap: 20px; padding: 0;">
+                        <!-- Booking Card 1 -->
+                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+                            <div class="flex-cen" style="gap: 12px;">
+                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <div class="flex-col" style="gap: 4px; flex: 1;">
+                                    <span style="font-size: 12px; font-weight: 500;">Nguyễn Văn Minh</span>
+                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Teacher</p>
+                                </div>
+                                <div style="background-color: #6b46c1; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
+                                    <span style="font-size: 9px; color: white; font-weight: 500;">Active</span>
+                                </div>
+                            </div>
+                            <div style="border-bottom: 1px solid #f1f1f1;"></div>
+                            <div class="flex-col" style="gap: 8px;">
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">Mathematics</span>
+                                </div>
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">2h/week</span>
+                                </div>
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Next class:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">Today 3PM</span>
+                                </div>
+                            </div>
+                            <button style="background-color: #6b46c1; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
+                        </div>
+
+                        <!-- Booking Card 2 -->
+                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+                            <div class="flex-cen" style="gap: 12px;">
+                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <div class="flex-col" style="gap: 4px; flex: 1;">
+                                    <span style="font-size: 12px; font-weight: 500;">Trần Thị Hương</span>
+                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Tutor</p>
+                                </div>
+                                <div style="background-color: #7e72bdff; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
+                                    <span style="font-size: 9px; color: white; font-weight: 500;">Pending</span>
+                                </div>
+                            </div>
+                            <div style="border-bottom: 1px solid #f1f1f1;"></div>
+                            <div class="flex-col" style="gap: 8px;">
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">Physics</span>
+                                </div>
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">1.5h/week</span>
+                                </div>
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Start date:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">Jan 20, 2026</span>
+                                </div>
+                            </div>
+                            <button style="background-color: #7e72bdff; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
+                        </div>
+
+                        <!-- Booking Card 3 -->
+                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+                            <div class="flex-cen" style="gap: 12px;">
+                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <div class="flex-col" style="gap: 4px; flex: 1;">
+                                    <span style="font-size: 12px; font-weight: 500;">Lê Văn Hải</span>
+                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Teacher</p>
+                                </div>
+                                <div style="background-color: #3432c0ff; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
+                                    <span style="font-size: 9px; color: white; font-weight: 500;">Completed</span>
+                                </div>
+                            </div>
+                            <div style="border-bottom: 1px solid #f1f1f1;"></div>
+                            <div class="flex-col" style="gap: 8px;">
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">Chemistry</span>
+                                </div>
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">2h/week</span>
+                                </div>
+                                <div class="flex-betw">
+                                    <span style="font-size: 11px; color: #acacacff;">Ended:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">Dec 31, 2025</span>
+                                </div>
+                            </div>
+                            <button style="background-color: #3432c0ff; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">Ended</button>
+                        </div>
+                    </div>
                 </div>
             }
             <app-user-info></app-user-info>
@@ -306,15 +533,13 @@ export class Dashboard implements OnInit {
     private classService = inject(ClassesService);
     private sessionService = inject(SessionsService);
     private router = inject(Router);
+    private userService = inject(UserService);
 
     classes = signal<ClassDetail[]>([]);
     sessions = signal<SessionDetail[]>([]);
     sessionsByDate = signal<SessionByDate[]>([]);
 
-    user = {
-        id: 0,
-        role: ''
-    };
+    user = this.userService.user;
 
     setClass: string = '';
 
@@ -330,8 +555,7 @@ export class Dashboard implements OnInit {
     }
 
     ngOnInit(): void {
-        this.user = JSON.parse(sessionStorage.getItem('user') || '{}');
-        console.log(this.user);
+        console.log(this.user());
 
         this.getClassList();
         this.getSessionList();
@@ -343,8 +567,8 @@ export class Dashboard implements OnInit {
     }
 
     getClassList() {
-        if (this.user.role === 'student') {
-            this.classService.classesByStudentList(this.user.id).subscribe({
+        if (this.user().role === 'student') {
+            this.classService.classesByStudentList(this.user().id).subscribe({
                 next: (res) => {
                     this.classes.set(res);
                 },
@@ -353,7 +577,7 @@ export class Dashboard implements OnInit {
                 }
             });
         } else {
-            this.classService.classesByTeacherList(this.user.id).subscribe({
+            this.classService.classesByTeacherList(this.user().id).subscribe({
                 next: (res) => {
                     this.classes.set(res);
                 },
@@ -397,15 +621,15 @@ export class Dashboard implements OnInit {
             this.sessionsByDate.set(this.groupSessionsByDate(res));
         };
 
-        if (this.user.role === 'student') {
-            this.sessionService.sessionsByStudentList(this.user.id).subscribe({
+        if (this.user().role === 'student') {
+            this.sessionService.sessionsByStudentList(this.user().id).subscribe({
                 next: handleResponse,
                 error: err => {
                     console.error('Failed to get session list by student:', err);
                 }
             });
-        } else if (this.user.role === 'teacher' || this.user.role === 'tutor') {
-            this.sessionService.sessionsByTeacherList(this.user.id).subscribe({
+        } else if (this.user().role === 'teacher' || this.user().role === 'tutor') {
+            this.sessionService.sessionsByTeacherList(this.user().id).subscribe({
                 next: handleResponse,
                 error: err => {
                     console.error('Failed to get session list by teacher:', err);
@@ -427,7 +651,7 @@ export class Dashboard implements OnInit {
     }
 
     navigateToBooking() {
-        
+        this.router.navigate(['/booking']);
     }
 
     initLineChart() {

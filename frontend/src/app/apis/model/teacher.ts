@@ -7,7 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { RoleEnum } from './roleEnum';
+import { TeacherRoleEnum } from './teacherRoleEnum';
 
 
 export interface Teacher { 
@@ -16,7 +16,7 @@ export interface Teacher {
     readonly created_at: string;
     name: string;
     bio?: string | null;
-    role: RoleEnum;
+    role: TeacherRoleEnum;
     phone?: string;
     email: string;
     img?: string | null;

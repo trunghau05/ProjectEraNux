@@ -39,11 +39,13 @@
 .info-item {
     align-items: center;
     padding: 30px 35px;
-
+    text-align: center;
+    
     span {
         font-weight: 500;
         margin: 15px 0 5px 0;
         font-size: 14px;
+        width: 200px;
     }
 
     p {

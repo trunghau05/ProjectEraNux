@@ -1,0 +1,17 @@
+<div class="search-bar">
+  <div class="flex-cen" style="border-radius: 5px;">
+    <mat-icon class="search-icon">search</mat-icon>
+  </div>
+  <input
+    type="text"
+    [(ngModel)]="searchValue"
+    [placeholder]="placeholder"
+    (keyup.enter)="onSearch()"
+    class="search-input"
+  />
+  @if (searchValue) {
+    <button class="clear-button" (click)="clearSearch()" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+</div>

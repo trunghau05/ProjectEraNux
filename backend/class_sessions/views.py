@@ -33,10 +33,10 @@ class SessionViewSet(ModelViewSet):
         """
         Return different serializer classes based on action.
 
-        - Use detailed serializer when fetching sessions by student or teacher
-        - Use default serializer for other actions (list, retrieve, create, update)
+        - Use detailed serializer for read operations (list, retrieve)
+        - Use default serializer for write operations (create, update, partial_update)
         """
-        if self.action in ['by_student', 'by_teacher']:
+        if self.action in ['list', 'retrieve', 'by_student', 'by_teacher']:
             return SessionDetailSerializer
         return SessionSerializer
 

@@ -301,9 +301,9 @@ export class ClassesService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<Class>>;
-    public classesList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<Class>>>;
-    public classesList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<Class>>>;
+    public classesList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<ClassDetail>>;
+    public classesList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<ClassDetail>>>;
+    public classesList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<ClassDetail>>>;
     public classesList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
@@ -338,7 +338,7 @@ export class ClassesService extends BaseService {
 
         let localVarPath = `/api/classes/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<Class>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<ClassDetail>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,

@@ -76,6 +76,10 @@ SPECTACULAR_SETTINGS = {
         'ClassStatusEnum': 'core.models.Class.STATUS_CHOICES',
         'SessionStatusEnum': 'core.models.Session.STATUS_CHOICES',
         'BookingStatusEnum': 'core.models.Booking.STATUS_CHOICES',
+        'TimeSlotStatusEnum': 'core.models.TimeSlot.STATUS_CHOICES',
+        'ScheduleStatusEnum': 'core.models.Schedule.STATUS_CHOICES',
+        'PaymentStatusEnum': 'core.models.Payment.STATUS_CHOICES',
+        'TeacherRoleEnum': 'core.models.Teacher.ROLE_CHOICES',
     }
 }
 

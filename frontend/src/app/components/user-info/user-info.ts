@@ -25,6 +25,8 @@ export class UserInfo implements OnInit {
   ngOnInit(): void {
       this.user = JSON.parse(sessionStorage.getItem('user') || '{}');
       this.getUserInfo();
+      console.log(this.usName());
+      
   }
 
   getUserInfo() {
@@ -44,8 +46,8 @@ export class UserInfo implements OnInit {
     } else if (this.user.role === 'teacher' || this.user.role == 'tutor') {
       this.teacherService.teachersRetrieve(this.user.id).subscribe({
         next: (res) => {
-          this.usName.set(res.name);
           this.teacher.set(res);
+          this.usName.set(res.name);
           let role = this.user.role.charAt(0).toUpperCase() + this.user.role.slice(1);
           this.user.role = role;
           console.log(this.teacher());

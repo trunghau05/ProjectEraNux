@@ -230,22 +230,46 @@ class LoginSerializer(serializers.Serializer):
         # 1. check student
         student = Student.objects.filter(email=email).first()
         if student:
-            if self._check_and_upgrade_password(student, raw_password):
+            password_valid = self._check_and_upgrade_password(student, raw_password)
+            if password_valid:
                 return {
                     'id': student.id,
-                    'role': 'student'
+                    'role': 'student',
+                    'name': student.name,
+                    'email': student.email,
+                    'message': 'Login successful',
+                    'success': True
                 }
+            else:
+                raise serializers.ValidationError({
+                    'password': 'Incorrect password',
+                    'success': False
+                })
 
         # 2. check teacher / tutor
         teacher = Teacher.objects.filter(email=email).first()
         if teacher:
-            if self._check_and_upgrade_password(teacher, raw_password):
+            password_valid = self._check_and_upgrade_password(teacher, raw_password)
+            if password_valid:
                 return {
                     'id': teacher.id,
-                    'role': teacher.role
+                    'role': teacher.role,
+                    'name': teacher.name,
+                    'email': teacher.email,
+                    'message': 'Login successful',
+                    'success': True
                 }
+            else:
+                raise serializers.ValidationError({
+                    'password': 'Incorrect password',
+                    'success': False
+                })
 
-        raise serializers.ValidationError('Invalid email or password')
+        # No user found with this email
+        raise serializers.ValidationError({
+            'email': 'Email not found in the system',
+            'success': False
+        })
 
     def _check_and_upgrade_password(self, user, raw_password):
         stored_password = user.password

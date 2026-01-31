@@ -1,0 +1,148 @@
+<div class="video-call-container">
+  <!-- Header -->
+  <div class="call-header">
+    <div class="title">Video Call</div>
+    @if (callState?.isInCall) {
+      <div class="room-info">
+        <span>Room: <strong>{{ roomId }}</strong></span>
+        <span class="participants">{{ getParticipantCount() }} người</span>
+        <button class="btn-copy" (click)="copyRoomLink()">
+          <mat-icon>content_copy</mat-icon>
+          <span>Copy Link</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Error message -->
+  @if (errorMessage) {
+    <div class="error-message">
+      <mat-icon>warning</mat-icon>
+      <span>{{ errorMessage }}</span>
+      <button (click)="errorMessage = ''">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Join form (before joining) -->
+  @if (!callState?.isInCall) {
+    <div class="join-form">
+      <h3>Tham gia cuộc gọi video</h3>
+
+      <div class="form-container">
+          <!-- User info display -->
+      <div class="user-info-display">
+        <div class="info-item">
+          <mat-icon class="info-icon">person</mat-icon>
+          <span class="label">Tên:</span>
+          <span class="value">{{ userName }}</span>
+        </div>
+        <div class="info-item">
+          <mat-icon class="info-icon">badge</mat-icon>
+          <span class="label">ID:</span>
+          <span class="value">{{ userId }}</span>
+        </div>
+      </div>
+
+      <!-- Room ID input -->
+      <div class="form-group">
+        <label for="roomId">Mã phòng</label>
+        <div class="input-with-button">
+          <input
+            id="roomId"
+            type="text"
+            [(ngModel)]="roomId"
+            placeholder="Nhập mã phòng hoặc tạo mới"
+            [disabled]="isConnecting"
+            class="field"
+          />
+          <button 
+            class="btn-generate" 
+            (click)="generateRoomId()"
+            [disabled]="isConnecting"
+            title="Tạo mã phòng mới"
+          >
+            <mat-icon>casino</mat-icon>
+            <span>Tạo mới</span>
+          </button>
+        </div>
+      </div>
+
+      <button
+        class="btn-join"
+        (click)="startCall()"
+        [disabled]="!roomId || isConnecting"
+      >
+        @if (isConnecting) {
+          <div class="spinner"></div>
+          <span>Đang kết nối...</span>
+        } @else {
+          <mat-icon>video_call</mat-icon>
+          <span>Tham gia</span>
+        }
+      </button>
+      </div>
+    </div>
+  }
+
+  <!-- Video area (during call) -->
+  @if (callState?.isInCall) {
+    <div class="video-area">
+      <!-- Remote videos -->
+      <div class="remote-videos" #remoteVideosContainer>
+        @if ((callState?.peers?.size ?? 0) === 0) {
+          <div class="no-peers">
+            <p>Đang đợi người khác tham gia...</p>
+          </div>
+        }
+      </div>
+
+    <!-- Local video -->
+    <div class="local-video-container">
+        <video
+          #localVideo
+          autoplay
+          muted
+          playsinline
+          [class.video-disabled]="!callState?.isVideoEnabled"
+        ></video>
+        @if (!callState?.isVideoEnabled) {
+          <div class="video-overlay">
+            <mat-icon>videocam_off</mat-icon>
+            <span>Camera tắt</span>
+          </div>
+        }
+      </div>
+
+    <!-- Controls -->
+    <div class="call-controls">
+      <button
+        class="btn-control"
+        [class.active]="callState?.isVideoEnabled"
+        (click)="toggleVideo()"
+        title="Bật/tắt camera"
+      >
+        <mat-icon>{{ callState?.isVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
+      </button>
+
+      <button
+        class="btn-control"
+        [class.active]="callState?.isAudioEnabled"
+        (click)="toggleAudio()"
+        title="Bật/tắt mic"
+      >
+        <mat-icon>{{ callState?.isAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
+      </button>
+
+      <button
+        class="btn-control btn-end"
+        (click)="endCall()"
+        title="Kết thúc cuộc gọi"
+      >
+        <mat-icon>call_end</mat-icon>
+      </button>
+    </div>
+    </div>
+  }
+</div>
