@@ -35,6 +35,14 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   callDurationDisplay = '00:00';
   private callTimerInterval: any = null;
 
+  // Screen recording states
+  isRecording: boolean = false;
+  recordingDuration = 0;
+  recordingDurationDisplay = '00:00';
+  private mediaRecorder: MediaRecorder | null = null;
+  private recordedChunks: Blob[] = [];
+  private recordingTimerInterval: any = null;
+
   private destroy$ = new Subject<void>();
   private remoteVideoElements = new Map<string, HTMLDivElement>();
   private screenVideoElements = new Map<string, HTMLVideoElement>();
@@ -157,6 +165,11 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     if (this.focusHandler) {
       window.removeEventListener('focus', this.focusHandler);
+    }
+    
+    // Stop recording if active
+    if (this.isRecording) {
+      this.stopRecording();
     }
     
     // Stop timer
@@ -316,6 +329,11 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
    * End the video call
    */
   endCall(): void {
+    // Stop recording if active and download video
+    if (this.isRecording) {
+      this.stopRecording();
+    }
+    
     this.webrtcService.endCall();
     this.remoteVideoElements.clear();
   }
@@ -706,6 +724,196 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.previewStream) {
       this.previewStream.getTracks().forEach(track => track.stop());
       this.previewStream = null;
+    }
+  }
+
+  /**
+   * Start screen recording with audio
+   */
+  async startRecording(): Promise<void> {
+    try {
+      // Request screen capture with audio
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: 'monitor',
+          cursor: 'always'
+        } as any,
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          sampleRate: 44100
+        } as any
+      });
+
+      // Get microphone audio
+      let micStream: MediaStream | null = null;
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100
+          },
+          video: false
+        });
+      } catch (micError) {
+        console.warn('Could not get microphone:', micError);
+      }
+
+      // Combine audio tracks
+      const audioContext = new AudioContext();
+      const audioDestination = audioContext.createMediaStreamDestination();
+
+      // Add display audio (system audio)
+      const displayAudioTracks = displayStream.getAudioTracks();
+      if (displayAudioTracks.length > 0) {
+        const displayAudioSource = audioContext.createMediaStreamSource(
+          new MediaStream(displayAudioTracks)
+        );
+        displayAudioSource.connect(audioDestination);
+      }
+
+      // Add microphone audio
+      if (micStream) {
+        const micAudioSource = audioContext.createMediaStreamSource(micStream);
+        micAudioSource.connect(audioDestination);
+      }
+
+      // Create combined stream with video and mixed audio
+      const combinedStream = new MediaStream([
+        ...displayStream.getVideoTracks(),
+        ...audioDestination.stream.getAudioTracks()
+      ]);
+
+      // Create MediaRecorder
+      const options = { mimeType: 'video/webm;codecs=vp9,opus' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options.mimeType = 'video/webm;codecs=vp8,opus';
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'video/webm';
+        }
+      }
+
+      this.mediaRecorder = new MediaRecorder(combinedStream, options);
+      this.recordedChunks = [];
+
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          this.recordedChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = () => {
+        this.downloadRecording();
+        
+        // Cleanup streams
+        displayStream.getTracks().forEach(track => track.stop());
+        if (micStream) {
+          micStream.getTracks().forEach(track => track.stop());
+        }
+        audioContext.close();
+      };
+
+      // Handle when user stops sharing screen
+      displayStream.getVideoTracks()[0].onended = () => {
+        if (this.isRecording) {
+          this.stopRecording();
+        }
+      };
+
+      this.mediaRecorder.start(1000); // Collect data every second
+      this.isRecording = true;
+      this.startRecordingTimer();
+
+      console.log('Screen recording started');
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      this.errorMessage = 'Không thể bắt đầu ghi màn hình. Vui lòng thử lại.';
+    }
+  }
+
+  /**
+   * Stop screen recording
+   */
+  stopRecording(): void {
+    if (this.mediaRecorder && this.isRecording) {
+      this.mediaRecorder.stop();
+      this.isRecording = false;
+      this.stopRecordingTimer();
+      console.log('Screen recording stopped');
+    }
+  }
+
+  /**
+   * Toggle recording (start/stop)
+   */
+  async toggleRecording(): Promise<void> {
+    if (this.isRecording) {
+      this.stopRecording();
+    } else {
+      await this.startRecording();
+    }
+  }
+
+  /**
+   * Download the recorded video
+   */
+  private downloadRecording(): void {
+    if (this.recordedChunks.length === 0) {
+      console.warn('No recorded data to download');
+      return;
+    }
+
+    const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    a.download = `video-call-${this.roomId}-${timestamp}.webm`;
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    console.log('Recording downloaded');
+    this.recordedChunks = [];
+  }
+
+  /**
+   * Start recording timer
+   */
+  private startRecordingTimer(): void {
+    this.recordingDuration = 0;
+    this.ngZone.runOutsideAngular(() => {
+      this.recordingTimerInterval = setInterval(() => {
+        this.ngZone.run(() => {
+          this.recordingDuration++;
+          const minutes = Math.floor(this.recordingDuration / 60);
+          const seconds = this.recordingDuration % 60;
+          this.recordingDurationDisplay = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          this.cdr.markForCheck();
+        });
+      }, 1000);
+    });
+  }
+
+  /**
+   * Stop recording timer
+   */
+  private stopRecordingTimer(): void {
+    if (this.recordingTimerInterval) {
+      clearInterval(this.recordingTimerInterval);
+      this.recordingTimerInterval = null;
+      this.recordingDuration = 0;
+      this.recordingDurationDisplay = '00:00';
     }
   }
 }

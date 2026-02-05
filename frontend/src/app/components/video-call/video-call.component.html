@@ -10,6 +10,12 @@
         <span>Room: <strong>{{ roomId }}</strong></span>
         <span class="participants">{{ getParticipantCount() }} người</span>
         <span class="call-duration">{{ callDurationDisplay }}</span>
+        @if (isRecording) {
+          <span class="recording-indicator">
+            <span class="recording-dot"></span>
+            <span>Ghi: {{ recordingDurationDisplay }}</span>
+          </span>
+        }
         <button class="btn-copy" (click)="copyRoomLink()">
           <mat-icon>content_copy</mat-icon>
           <span style="color: white;">Copy Link</span>
@@ -268,6 +274,15 @@
           title="Chia sẻ màn hình"
         >
           <mat-icon>{{ callState?.isScreenSharing ? 'stop_screen_share' : 'screen_share' }}</mat-icon>
+        </button>
+
+        <button
+          class="btn-control btn-record"
+          [class.recording]="isRecording"
+          (click)="toggleRecording()"
+          title="{{ isRecording ? 'Dừng ghi' : 'Ghi màn hình' }}"
+        >
+          <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
         </button>
 
         <button
