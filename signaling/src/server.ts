@@ -24,6 +24,7 @@ interface UserInfo {
   userId: string;
   userName: string;
   roomId: string;
+  isScreenSharing?: boolean;
 }
 
 interface JoinRoomData {
@@ -64,7 +65,7 @@ io.on('connection', (socket: Socket) => {
     socket.join(roomId);
     
     // Store user info
-    users.set(socket.id, { userId, userName, roomId });
+    users.set(socket.id, { userId, userName, roomId, isScreenSharing: false });
     
     // Add room info
     if (!rooms.has(roomId)) {
@@ -79,7 +80,7 @@ io.on('connection', (socket: Socket) => {
       userName
     });
 
-    // Send existing users in the room
+    // Send existing users in the room with screen sharing status
     const existingUsers = Array.from(rooms.get(roomId)!)
       .filter(id => id !== socket.id)
       .map(id => {
@@ -87,11 +88,13 @@ io.on('connection', (socket: Socket) => {
         return {
           socketId: id,
           userId: user?.userId,
-          userName: user?.userName
+          userName: user?.userName,
+          isScreenSharing: user?.isScreenSharing || false
         };
       });
 
     socket.emit('existing-users', existingUsers);
+    console.log('Sent existing users to new joiner:', existingUsers.map(u => ({ id: u.socketId, sharing: u.isScreenSharing })));
 
     console.log(`User ${userName} (${userId}) joined room ${roomId}`);
   });
@@ -147,6 +150,35 @@ io.on('connection', (socket: Socket) => {
     socket.to(roomId).emit('user-audio-toggled', {
       socketId: socket.id,
       enabled
+    });
+  });
+
+  // Screen sharing events
+  socket.on('screen-share-start', ({ roomId }: { roomId: string }) => {
+    console.log('User started screen sharing:', socket.id, 'in room:', roomId);
+    
+    // Update user's screen sharing status
+    const user = users.get(socket.id);
+    if (user) {
+      user.isScreenSharing = true;
+    }
+    
+    socket.to(roomId).emit('screen-share-start', {
+      socketId: socket.id
+    });
+  });
+
+  socket.on('screen-share-stop', ({ roomId }: { roomId: string }) => {
+    console.log('User stopped screen sharing:', socket.id, 'in room:', roomId);
+    
+    // Update user's screen sharing status
+    const user = users.get(socket.id);
+    if (user) {
+      user.isScreenSharing = false;
+    }
+    
+    socket.to(roomId).emit('screen-share-stop', {
+      socketId: socket.id
     });
   });
 });

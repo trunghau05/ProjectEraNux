@@ -17,4 +17,12 @@ export class App {
   hide(route: string) {
     return this.router.url.startsWith(`/${route}`);
   }
+
+  // Show navbar only when NOT on login, register, or video-call pages
+  shouldHideNavbar(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/login') || 
+           url.startsWith('/register') || 
+           url.startsWith('/video-call');
+  }
 }

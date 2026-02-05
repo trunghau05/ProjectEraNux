@@ -1,5 +1,5 @@
 <div class="container flex-cen">
-    @if(!hide('login') && !hide('register')) {
+    @if(!shouldHideNavbar()) {
         <app-navbar></app-navbar>
     }
     <div class="content">

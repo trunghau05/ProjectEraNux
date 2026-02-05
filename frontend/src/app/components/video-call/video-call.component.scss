@@ -2,7 +2,15 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 100vw;
   background: #f5f7fb;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .call-header {
@@ -12,11 +20,21 @@
   padding: 16px 24px;
   background: #fff;
   border-bottom: 1px solid #e6eef7;
+  flex-shrink: 0;
+  box-sizing: border-box;
 
-  .title {
-    font-size: 14px;
-    font-weight: 500;
-    color: #222;
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: bolder;
+
+    p {
+      font-size: 16px;
+      margin: 0;
+      color: #222;
+      font-weight: bold;
+    }
   }
 
   .room-info {
@@ -74,6 +92,8 @@
   border-left: 4px solid #d32f2f;
   color: #d32f2f;
   font-size: 12px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 
   mat-icon {
     width: 18px;
@@ -114,6 +134,166 @@
   justify-content: center;
   align-items: center;
   padding: 24px;
+  overflow: auto;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+// Pre-join container with 50-50 split layout
+.pre-join-container {
+  flex: 1;
+  padding: 30px;
+  background: #f5f7fb;
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  max-height: calc(100% - 56px);
+}
+
+// Left side: Camera preview section (60%)
+.preview-section {
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 435px;
+  max-height: 100%;
+  margin-left: 40px;
+
+  .preview-video-wrapper {
+    flex: 1;
+    position: relative;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+
+      &.video-disabled {
+        opacity: 0.3;
+      }
+    }
+
+    .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+
+      mat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 48px;
+      }
+    }
+
+    .preview-user-name {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      z-index: 5;
+
+      span {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+      }
+    }
+  }
+
+  .preview-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+
+    .btn-preview-control {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      mat-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 24px;
+      }
+
+      span {
+        display: none;
+      }
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: scale(1.05);
+      }
+
+      &.active {
+        background: rgba(107, 70, 193, 0.9);
+        border-color: #6b46c1;
+
+        &:hover {
+          background: rgba(90, 59, 161, 0.95);
+        }
+      }
+    }
+  }
+}
+
+// Right side: Room form section (40%)
+.room-form-section {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  height: 450px;
+  max-height: 100%;
+  overflow-y: auto;
 
   h3 {
     margin: 0 0 24px;
@@ -124,7 +304,7 @@
 
   .form-container {
     width: 100%;
-    max-width: 460px;
+    max-width: 350px;
     background: #fff;
     border-radius: 10px;
     padding: 28px;
@@ -300,17 +480,46 @@
   position: relative;
   overflow: hidden;
   background: #f5f7fb;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .remote-videos {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(350px, 100%), 1fr));
+  grid-auto-rows: minmax(200px, 350px);
   gap: 10px;
-  padding: 10px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #6b46c1 #f1f1f1;
+  padding: 12px;
+  overflow: auto;
+  background: #f5f7fb;
+  place-items: center;
+  align-content: center;
+  justify-content: center;
+  box-sizing: border-box;
+
+  // Khi chỉ có 2 người (1:1 call), thu nhỏ video để không bị tràn
+  &.one-on-one {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    max-width: 800px;
+    max-height: 600px;
+    margin: auto;
+    align-content: center;
+    justify-content: center;
+    
+    :global(.remote-video-wrapper) {
+      width: 100%;
+      max-width: 750px;
+      height: auto;
+      max-height: 500px;
+      aspect-ratio: 16 / 9;
+    }
+  }
 
   &::-webkit-scrollbar {
     width: 10px;
@@ -335,33 +544,93 @@
     color: #999;
   }
 
-  :global(.remote-video) {
+  :global(.remote-video-wrapper) {
+    position: relative;
     width: 100%;
+    max-width: 500px;
     height: 100%;
-    object-fit: cover;
+    max-height: 350px;
+    min-height: 200px;
     background: #000;
     border-radius: 8px;
-    min-height: 200px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 9;
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+      transform: scaleX(-1);
+    }
+
+    .participant-name {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      padding: 6px 14px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .video-status,
+    .mic-status {
+      position: absolute;
+      top: 12px;
+      padding: 6px;
+      background: rgba(211, 47, 47, 0.9);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+      .material-icons {
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
+      }
+    }
+
+    .video-status {
+      right: 12px;
+    }
+
+    .mic-status {
+      right: 50px; // Shifted left when video icon is present
+    }
   }
 }
 
 .local-video-container {
   position: absolute;
-  bottom: 100px;
+  bottom: 20px;
   right: 20px;
-  width: 200px;
+  width: 230px;
   height: 150px;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   border: 2px solid #6b46c1;
   z-index: 10;
+  box-sizing: border-box;
 
   video {
     width: 100%;
     height: 100%;
     object-fit: cover;
     background: #000;
+    transform: scaleX(-1); // Lật camera của mình
 
     &.video-disabled {
       opacity: 0.3;
@@ -389,56 +658,418 @@
       font-size: 24px;
     }
   }
+
+  .mic-status {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px;
+    background: rgba(211, 47, 47, 0.9);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+    mat-icon {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+    }
+  }
+
+  .user-name-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+
+    span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
+    }
+  }
+}
+
+// Screen share layout
+.screen-share-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  gap: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-height: 0;
+
+  .screen-share-main {
+    flex: 0 0 75%;
+    position: relative;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    max-height: 100%;
+    box-sizing: border-box;
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .screen-label {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(107, 70, 193, 0.95);
+      color: #fff;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+      mat-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+      }
+    }
+  }
+
+  .participants-sidebar {
+    flex: 0 0 24.1%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 0;
+    max-height: 100%;
+    box-sizing: border-box;
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #6b46c1;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+      box-sizing: border-box;
+
+      mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+      }
+    }
+
+    .participants-list {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: #6b46c1 #f1f1f1;
+      min-height: 0;
+      box-sizing: border-box;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: #6b46c1;
+        border-radius: 3px;
+      }
+
+      // Container for remote participants
+      .remote-participants-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .participant-video {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        border-radius: 6px;
+        overflow: hidden;
+        flex-shrink: 0;
+
+        video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scaleX(-1);
+
+          &.video-disabled {
+            opacity: 0.3;
+          }
+        }
+
+        .video-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: rgba(0, 0, 0, 0.7);
+          color: #fff;
+
+          mat-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 32px;
+          }
+        }
+
+        .participant-name {
+          position: absolute;
+          bottom: 6px;
+          left: 6px;
+          padding: 3px 10px;
+          background: rgba(0, 0, 0, 0.75);
+          color: #fff;
+          border-radius: 10px;
+          font-size: 10px;
+          font-weight: 500;
+        }
+
+        .user-name-label {
+          position: absolute;
+          top: 6px;
+          left: 6px;
+          padding: 4px 10px;
+          background: rgba(0, 0, 0, 0.85);
+          color: #fff;
+          border-radius: 10px;
+          font-size: 10px;
+          font-weight: 600;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+          z-index: 5;
+
+          span {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+          }
+        }
+
+        .video-status,
+        .mic-status {
+          position: absolute;
+          top: 6px;
+          padding: 4px;
+          background: rgba(211, 47, 47, 0.9);
+          color: #fff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .material-icons {
+            width: 14px;
+            height: 14px;
+            font-size: 14px;
+          }
+        }
+
+        .video-status {
+          right: 6px;
+        }
+
+        .mic-status {
+          right: 40px;
+        }
+      }
+
+      .no-peers-small {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: #999;
+        text-align: center;
+        gap: 8px;
+
+        mat-icon {
+          width: 32px;
+          height: 32px;
+          font-size: 32px;
+          color: #ccc;
+        }
+
+        p {
+          margin: 0;
+          font-size: 11px;
+        }
+      }
+
+      :global(.remote-video-item) {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #000;
+        border-radius: 6px;
+        overflow: hidden;
+        flex-shrink: 0;
+
+        video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scaleX(-1);
+        }
+
+        .participant-name {
+          position: absolute;
+          bottom: 6px;
+          left: 6px;
+          padding: 3px 10px;
+          background: rgba(0, 0, 0, 0.75);
+          color: #fff;
+          border-radius: 10px;
+          font-size: 10px;
+          font-weight: 500;
+        }
+
+        .video-status,
+        .mic-status {
+          position: absolute;
+          top: 6px;
+          padding: 4px;
+          background: rgba(211, 47, 47, 0.9);
+          color: #fff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .material-icons {
+            width: 14px;
+            height: 14px;
+            font-size: 14px;
+          }
+        }
+
+        .video-status {
+          right: 6px;
+        }
+
+        .mic-status {
+          right: 40px;
+        }
+      }
+    }
+  }
+}
+
+// Normal layout (without screen sharing)
+.normal-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #f5f7fb;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
   .call-controls {
   position: absolute;
-  bottom: 20px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 12px;
-  padding: 12px 20px;
-  background: rgba(107, 70, 193, 0.95);
-  border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+  box-sizing: border-box;
 
   .btn-control {
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
-    transition: all 0.3s;
-    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
 
     mat-icon {
-      width: 24px;
-      height: 24px;
-      font-size: 24px;
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
     }
 
     &:hover {
-      transform: scale(1.1);
-      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.25);
     }
 
     &.active {
-      background: rgba(255, 255, 255, 0.95);
-      color: #6b46c1;
+      background: rgba(107, 70, 193, 0.9);
+      color: #fff;
     }
 
     &.btn-end {
       background: #d32f2f;
 
       &:hover {
-        background: #c62828;
-        color: #fff;
+        background: #b71c1c;
+        transform: translateY(-2px);
       }
     }
   }
@@ -458,15 +1089,59 @@
   .local-video-container {
     width: 120px;
     height: 90px;
-    bottom: 80px;
-    right: 10px;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .call-controls {
+    bottom: max(20px, env(safe-area-inset-bottom));
   }
 
   .remote-videos {
     grid-template-columns: 1fr;
+    padding-bottom: 120px;
   }
 
   .form-container {
     padding: 20px;
+  }
+
+  // Pre-join mobile layout
+  .pre-join-container {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+
+    .preview-section {
+      .preview-video-wrapper {
+        min-height: 200px;
+      }
+
+      .preview-controls {
+        .btn-preview-control {
+          span {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+
+  // Screen share layout adjustments for mobile
+  .screen-share-layout {
+    flex-direction: column;
+    padding: 8px;
+
+    .screen-share-main {
+      flex: 0 0 60%;
+    }
+
+    .participants-sidebar {
+      flex: 0 0 40%;
+
+      .participant-video {
+        aspect-ratio: 16 / 9;
+      }
+    }
   }
 }

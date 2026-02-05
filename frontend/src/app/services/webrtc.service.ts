@@ -7,16 +7,23 @@ export interface Peer {
   userId: string;
   userName: string;
   stream?: MediaStream;
+  screenStream?: MediaStream;
   peerConnection?: RTCPeerConnection;
+  screenPeerConnection?: RTCPeerConnection;
+  isScreenSharing?: boolean;
+  isVideoEnabled?: boolean;
+  isAudioEnabled?: boolean;
 }
 
 export interface CallState {
   isInCall: boolean;
   roomId: string | null;
   localStream: MediaStream | null;
+  screenStream: MediaStream | null;
   peers: Map<string, Peer>;
   isVideoEnabled: boolean;
   isAudioEnabled: boolean;
+  isScreenSharing: boolean;
 }
 
 @Injectable({
@@ -40,9 +47,11 @@ export class WebrtcService {
     isInCall: false,
     roomId: null,
     localStream: null,
+    screenStream: null,
     peers: new Map(),
     isVideoEnabled: true,
-    isAudioEnabled: true
+    isAudioEnabled: true,
+    isScreenSharing: false
   };
 
   // Observables
@@ -96,7 +105,9 @@ export class WebrtcService {
       // Only create offer if our socket ID is smaller (to avoid glare)
       users.forEach(user => {
         const shouldOffer = (this.socket?.id || '') < user.socketId;
-        console.log(`Existing user ${user.socketId}, should offer: ${shouldOffer}`);
+        console.log(`Existing user ${user.socketId}, should offer: ${shouldOffer}, isScreenSharing: ${user.isScreenSharing}`);
+        // Đảm bảo flag isScreenSharing được truyền vào peer object
+        // Flag này sẽ được sử dụng trong createPeerConnection để xác định track type
         this.createPeerConnection(user, shouldOffer);
       });
     });
@@ -135,6 +146,8 @@ export class WebrtcService {
       const peer = this.callState.peers.get(socketId);
       if (peer) {
         console.log(`User ${socketId} ${enabled ? 'enabled' : 'disabled'} video`);
+        peer.isVideoEnabled = enabled;
+        this.updateCallState();
       }
     });
 
@@ -142,6 +155,35 @@ export class WebrtcService {
       const peer = this.callState.peers.get(socketId);
       if (peer) {
         console.log(`User ${socketId} ${enabled ? 'enabled' : 'disabled'} audio`);
+        peer.isAudioEnabled = enabled;
+        this.updateCallState();
+      }
+    });
+
+    // Screen sharing events
+    this.socket.on('screen-share-start', ({ socketId }: { socketId: string }) => {
+      console.log('User started screen sharing:', socketId);
+      const peer = this.callState.peers.get(socketId);
+      if (peer) {
+        peer.isScreenSharing = true;
+        this.callState.peers = new Map(this.callState.peers);
+        this.updateCallState();
+      } else {
+        console.log('Peer not yet created for screen sharing user:', socketId, '- will be set when peer connects');
+      }
+    });
+
+    this.socket.on('screen-share-stop', ({ socketId }: { socketId: string }) => {
+      console.log('User stopped screen sharing:', socketId);
+      const peer = this.callState.peers.get(socketId);
+      if (peer) {
+        peer.isScreenSharing = false;
+        if (peer.screenStream) {
+          peer.screenStream.getTracks().forEach(track => track.stop());
+          peer.screenStream = undefined;
+        }
+        this.callState.peers = new Map(this.callState.peers);
+        this.updateCallState();
       }
     });
   }
@@ -151,9 +193,35 @@ export class WebrtcService {
    */
   async startCall(roomId: string, userId: string, userName: string): Promise<void> {
     try {
+      console.log('[WebRTC] Starting call with:', { roomId, userId, userName });
+      
       // Connect to signaling server
       this.connectToSignalingServer();
 
+      // Wait for socket to be connected
+      if (!this.socket?.connected) {
+        console.log('[WebRTC] Waiting for socket connection...');
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Không thể kết nối đến server'));
+          }, 5000);
+
+          this.socket?.once('connect', () => {
+            clearTimeout(timeout);
+            console.log('[WebRTC] Socket connected');
+            resolve();
+          });
+
+          // If already connected, resolve immediately
+          if (this.socket?.connected) {
+            clearTimeout(timeout);
+            console.log('[WebRTC] Socket already connected');
+            resolve();
+          }
+        });
+      }
+
+      console.log('[WebRTC] Requesting user media...');
       // Get user media
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -168,19 +236,24 @@ export class WebrtcService {
         }
       });
 
+      console.log('[WebRTC] Got user media, tracks:', stream.getTracks().length);
+      
       this.callState.localStream = stream;
-      this.callState.isInCall = true;
       this.callState.roomId = roomId;
       this.callState.isVideoEnabled = true;
       this.callState.isAudioEnabled = true;
+      this.callState.isInCall = true;
 
+      // Update state immediately
       this.updateCallState();
+      console.log('[WebRTC] Call state updated, isInCall:', this.callState.isInCall);
 
       // Join room
+      console.log('[WebRTC] Joining room:', roomId);
       this.socket?.emit('join-room', { roomId, userId, userName });
 
     } catch (error: any) {
-      console.error('Error starting call:', error);
+      console.error('[WebRTC] Error starting call:', error);
       this.errorSubject.next(`Không thể khởi động cuộc gọi: ${error.message}`);
       throw error;
     }
@@ -217,9 +290,11 @@ export class WebrtcService {
       isInCall: false,
       roomId: null,
       localStream: null,
+      screenStream: null,
       peers: new Map(),
       isVideoEnabled: true,
-      isAudioEnabled: true
+      isAudioEnabled: true,
+      isScreenSharing: false
     };
 
     this.updateCallState();
@@ -232,30 +307,125 @@ export class WebrtcService {
     try {
       const peerConnection = new RTCPeerConnection(this.iceServers);
 
+      // Initialize peer state defaults if not set
+      if (peer.isVideoEnabled === undefined) peer.isVideoEnabled = true;
+      if (peer.isAudioEnabled === undefined) peer.isAudioEnabled = true;
+
+      // Lưu peer vào callState ngay lập tức để giữ trạng thái isScreenSharing
+      peer.peerConnection = peerConnection;
+      this.callState.peers.set(peer.socketId, peer);
+
       // Add local stream tracks to peer connection
       if (this.callState.localStream) {
-        this.callState.localStream.getTracks().forEach(track => {
-          peerConnection.addTrack(track, this.callState.localStream!);
+        const localTracks = this.callState.localStream.getTracks();
+        console.log(`🎥 Adding ${localTracks.length} LOCAL tracks to peer ${peer.socketId}:`, 
+          localTracks.map(t => ({ kind: t.kind, label: t.label })));
+        localTracks.forEach(track => {
+          const sender = peerConnection.addTrack(track, this.callState.localStream!);
+          console.log(`  ✓ Added ${track.kind} track:`, track.label);
         });
       }
 
-      // Handle remote stream
+      // Add screen share tracks if currently sharing
+      if (this.callState.screenStream) {
+        const screenTracks = this.callState.screenStream.getTracks();
+        console.log(`🖥️  Adding ${screenTracks.length} SCREEN tracks to peer ${peer.socketId}:`, 
+          screenTracks.map(t => ({ kind: t.kind, label: t.label })));
+        screenTracks.forEach(track => {
+          const sender = peerConnection.addTrack(track, this.callState.screenStream!);
+          console.log(`  ✓ Added screen ${track.kind} track:`, track.label);
+        });
+      } else if (peer.isScreenSharing) {
+        console.warn(`⚠️  Peer ${peer.socketId} isScreenSharing=true but no local screenStream available`);
+      }
+
+      // Log total tracks in this peer connection
+      const senders = peerConnection.getSenders();
+      console.log(`📊 Total tracks in peer connection for ${peer.socketId}:`, 
+        senders.map(s => s.track ? { kind: s.track.kind, label: s.track.label } : 'null'));
+
+      // Handle remote stream - separate camera and screen tracks
       const remoteStream = new MediaStream();
+      const screenStream = new MediaStream();
+      const tracksReceived: Array<{kind: string, label: string, streamId: string}> = [];
+      
       peerConnection.ontrack = (event) => {
-        console.log('Received remote track:', event.track.kind, 'from peer:', peer.socketId);
-        console.log('Event streams:', event.streams);
+        const track = event.track;
+        const stream = event.streams[0];
+        const streamId = stream?.id || 'no-stream';
         
-        // Add track to remote stream
-        if (!remoteStream.getTracks().find(t => t.id === event.track.id)) {
-          remoteStream.addTrack(event.track);
-          console.log('Added track to remote stream. Total tracks:', remoteStream.getTracks().length);
+        // Log để debug
+        tracksReceived.push({ kind: track.kind, label: track.label, streamId });
+        console.log(`📥 Track #${tracksReceived.length} from ${peer.socketId}:`, {
+          kind: track.kind,
+          label: track.label,
+          streamId,
+          peerIsScreenSharing: peer.isScreenSharing,
+          allTracks: tracksReceived
+        });
+        
+        // Phát hiện screen share track dựa trên:
+        // 1. Label chứa "screen" (Chrome/Edge screen share có label như "screen:0:0")
+        // 2. Peer có flag isScreenSharing VÀ đây là video track từ stream riêng biệt
+        const trackLabel = track.label.toLowerCase();
+        const isScreenByLabel = trackLabel.includes('screen') || trackLabel.includes('display');
+        
+        // Nếu peer đang share, ta cần phân biệt giữa camera stream và screen stream
+        // Camera stream thường có cả audio + video
+        // Screen stream thường chỉ có video, và có label hoặc streamId khác
+        let isScreenShareTrack = false;
+        
+        if (peer.isScreenSharing && track.kind === 'video') {
+          if (isScreenByLabel) {
+            // Chắc chắn là screen share nếu label có "screen"
+            isScreenShareTrack = true;
+          } else {
+            // Nếu không có label rõ ràng, check xem đã có camera video chưa
+            // Nếu đã có camera video trong remoteStream, video này phải là screen
+            const hasExistingCameraVideo = remoteStream.getVideoTracks().length > 0;
+            isScreenShareTrack = hasExistingCameraVideo;
+          }
         }
         
-        // Update peer stream and notify
+        if (isScreenShareTrack) {
+          console.log('✅ SCREEN SHARE track detected:', {
+            label: track.label,
+            streamId,
+            reason: isScreenByLabel ? 'label-based' : 'second-video-track'
+          });
+          
+          if (!screenStream.getTracks().find(t => t.id === track.id)) {
+            screenStream.addTrack(track);
+            peer.screenStream = screenStream;
+            peer.isScreenSharing = true;
+            console.log('✅ Added to screenStream. Total screen tracks:', screenStream.getTracks().length);
+          }
+        } else {
+          console.log('📹 CAMERA track detected:', { label: track.label, kind: track.kind });
+          
+          if (!remoteStream.getTracks().find(t => t.id === track.id)) {
+            remoteStream.addTrack(track);
+            console.log('📹 Added to remoteStream. Total camera tracks:', remoteStream.getTracks().length);
+          }
+        }
+        
         peer.stream = remoteStream;
-        this.callState.peers.set(peer.socketId, peer);
-        console.log('Updated peer stream for:', peer.socketId);
+        this.callState.peers = new Map(this.callState.peers.set(peer.socketId, peer));
+        console.log(`✓ Updated peer ${peer.socketId}:`, {
+          hasCamera: peer.stream?.getTracks().length,
+          hasScreen: peer.screenStream?.getTracks().length,
+          isScreenSharing: peer.isScreenSharing
+        });
         this.updateCallState();
+        
+        track.onended = () => {
+          console.log('Track ended:', track.kind, 'from:', peer.socketId);
+          if (isScreenShareTrack) {
+            peer.isScreenSharing = false;
+            peer.screenStream = undefined;
+            this.updateCallState();
+          }
+        };
       };
 
       // Handle ICE candidates
@@ -278,9 +448,10 @@ export class WebrtcService {
           this.removePeer(peer.socketId);
         }
       };
-
-      peer.peerConnection = peerConnection;
-      this.callState.peers.set(peer.socketId, peer);
+      
+      // Cập nhật callState với peer mới
+      this.callState.peers = new Map(this.callState.peers);
+      console.log('Added peer connection for:', peer.socketId, 'isScreenSharing:', peer.isScreenSharing, 'Total peers:', this.callState.peers.size);
 
       // Only create and send offer if requested (not when handling incoming offer)
       if (shouldCreateOffer) {
@@ -401,6 +572,8 @@ export class WebrtcService {
         peer.stream.getTracks().forEach(track => track.stop());
       }
       this.callState.peers.delete(socketId);
+      this.callState.peers = new Map(this.callState.peers);
+      console.log('Removed peer:', socketId, 'Remaining peers:', this.callState.peers.size);
       this.updateCallState();
     }
   }
@@ -459,12 +632,119 @@ export class WebrtcService {
   }
 
   /**
-   * Get remote streams
+   * Get remote streams with peer info
    */
-  getRemoteStreams(): MediaStream[] {
+  getRemoteStreams(): Array<{ stream: MediaStream; peer: Peer }> {
     return Array.from(this.callState.peers.values())
       .filter(peer => peer.stream)
-      .map(peer => peer.stream!);
+      .map(peer => ({ stream: peer.stream!, peer }));
+  }
+
+  /**
+   * Start screen sharing
+   */
+  async startScreenShare(): Promise<void> {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { cursor: 'always' },
+        audio: false
+      } as any);
+
+      this.callState.screenStream = screenStream;
+      this.callState.isScreenSharing = true;
+
+      screenStream.getVideoTracks()[0].onended = () => {
+        this.stopScreenShare();
+      };
+
+      const promises: Promise<void>[] = [];
+      this.callState.peers.forEach(peer => {
+        if (peer.peerConnection) {
+          const promise = (async () => {
+            screenStream.getTracks().forEach(track => {
+              peer.peerConnection!.addTrack(track, screenStream);
+              console.log('Added screen share track to peer:', peer.socketId);
+            });
+            
+            const offer = await peer.peerConnection!.createOffer();
+            await peer.peerConnection!.setLocalDescription(offer);
+            
+            this.socket?.emit('offer', {
+              offer,
+              to: peer.socketId
+            });
+          })();
+          promises.push(promise);
+        }
+      });
+
+      await Promise.all(promises);
+
+      if (this.callState.roomId) {
+        this.socket?.emit('screen-share-start', {
+          roomId: this.callState.roomId,
+          socketId: this.socket?.id
+        });
+      }
+
+      this.updateCallState();
+      console.log('Screen sharing started successfully');
+    } catch (error: any) {
+      console.error('Error starting screen share:', error);
+      this.errorSubject.next('Không thể chia sẻ màn hình');
+      throw error;
+    }
+  }
+
+  /**
+   * Stop screen sharing
+   */
+  stopScreenShare(): void {
+    if (this.callState.screenStream) {
+      this.callState.screenStream.getTracks().forEach(track => track.stop());
+
+      const promises: Promise<void>[] = [];
+      this.callState.peers.forEach(peer => {
+        if (peer.peerConnection) {
+          const promise = (async () => {
+            const senders = peer.peerConnection!.getSenders();
+            senders.forEach(sender => {
+              if (sender.track && this.callState.screenStream?.getTracks().includes(sender.track)) {
+                peer.peerConnection!.removeTrack(sender);
+              }
+            });
+            
+            try {
+              const offer = await peer.peerConnection!.createOffer();
+              await peer.peerConnection!.setLocalDescription(offer);
+              
+              this.socket?.emit('offer', {
+                offer,
+                to: peer.socketId
+              });
+            } catch (error) {
+              console.error('Error renegotiating after screen share stop:', error);
+            }
+          })();
+          promises.push(promise);
+        }
+      });
+
+      Promise.all(promises);
+
+      this.callState.screenStream = null;
+      this.callState.isScreenSharing = false;
+
+      if (this.callState.roomId) {
+        this.socket?.emit('screen-share-stop', {
+          roomId: this.callState.roomId,
+          socketId: this.socket?.id
+        });
+      }
+
+      this.updateCallState();
+      console.log('Screen sharing stopped');
+    }
   }
 
   /**

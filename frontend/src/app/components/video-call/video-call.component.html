@@ -1,14 +1,18 @@
 <div class="video-call-container">
   <!-- Header -->
   <div class="call-header">
-    <div class="title">Video Call</div>
+    <div class="logo flex-cen">
+      <div style="width:30px;height:30px;border-radius:8px;font-family:fantasy;background:linear-gradient(135deg,#6b46c1 0%,#9f7aea 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;transform:rotate(90deg);">EN</div>
+      <p>EraNux</p>
+    </div>
     @if (callState?.isInCall) {
       <div class="room-info">
         <span>Room: <strong>{{ roomId }}</strong></span>
         <span class="participants">{{ getParticipantCount() }} người</span>
+        <span class="call-duration">{{ callDurationDisplay }}</span>
         <button class="btn-copy" (click)="copyRoomLink()">
           <mat-icon>content_copy</mat-icon>
-          <span>Copy Link</span>
+          <span style="color: white;">Copy Link</span>
         </button>
       </div>
     }
@@ -25,63 +29,106 @@
     </div>
   }
 
-  <!-- Join form (before joining) -->
+  <!-- Join form (before joining) - Split layout 50-50 -->
   @if (!callState?.isInCall) {
-    <div class="join-form">
-      <h3>Tham gia cuộc gọi video</h3>
+    <div class="pre-join-container">
+      <!-- Left side: Camera preview with controls -->
+      <div class="preview-section">
+        <div class="preview-video-wrapper">
+          <video
+            #previewVideo
+            autoplay
+            muted
+            playsinline
+            [class.video-disabled]="!isPreviewVideoEnabled"
+          ></video>
+          @if (!isPreviewVideoEnabled) {
+            <div class="video-overlay">
+              <mat-icon>videocam_off</mat-icon>
+              <span>Camera tắt</span>
+            </div>
+          }
 
-      <div class="form-container">
-          <!-- User info display -->
-      <div class="user-info-display">
-        <div class="info-item">
-          <mat-icon class="info-icon">person</mat-icon>
-          <span class="label">Tên:</span>
-          <span class="value">{{ userName }}</span>
-        </div>
-        <div class="info-item">
-          <mat-icon class="info-icon">badge</mat-icon>
-          <span class="label">ID:</span>
-          <span class="value">{{ userId }}</span>
+          <!-- User name label at top left -->
+          <div class="preview-user-name">
+            <span>{{ userName }}</span>
+          </div>
+
+          <!-- Preview controls inside video at bottom center -->
+          <div class="preview-controls">
+            <button
+              class="btn-preview-control"
+              [class.active]="isPreviewVideoEnabled"
+              (click)="togglePreviewVideo()"
+              title="Bật/tắt camera"
+            >
+              <mat-icon>{{ isPreviewVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
+              <span>{{ isPreviewVideoEnabled ? 'Tắt camera' : 'Bật camera' }}</span>
+            </button>
+
+            <button
+              class="btn-preview-control"
+              [class.active]="isPreviewAudioEnabled"
+              (click)="togglePreviewAudio()"
+              title="Bật/tắt mic"
+            >
+              <mat-icon>{{ isPreviewAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
+              <span>{{ isPreviewAudioEnabled ? 'Tắt mic' : 'Bật mic' }}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Room ID input -->
-      <div class="form-group">
-        <label for="roomId">Mã phòng</label>
-        <div class="input-with-button">
-          <input
-            id="roomId"
-            type="text"
-            [(ngModel)]="roomId"
-            placeholder="Nhập mã phòng hoặc tạo mới"
-            [disabled]="isConnecting"
-            class="field"
-          />
-          <button 
-            class="btn-generate" 
-            (click)="generateRoomId()"
-            [disabled]="isConnecting"
-            title="Tạo mã phòng mới"
+      <!-- Right side: Room form -->
+      <div class="room-form-section">
+        <h3>Tham gia cuộc gọi video</h3>
+
+        <div class="form-container">
+          <!-- User info display -->
+          <div class="user-info-display">
+            <div class="info-item">
+              <mat-icon class="info-icon">person</mat-icon>
+              <span class="label">Tên:</span>
+              <span class="value">{{ userName }}</span>
+            </div>
+            <div class="info-item">
+              <mat-icon class="info-icon">badge</mat-icon>
+              <span class="label">ID:</span>
+              <span class="value">{{ userId }}</span>
+            </div>
+          </div>
+
+          <!-- Room ID input -->
+          <div class="form-group">
+            <label for="roomId">Mã phòng</label>
+            <div class="input-with-button">
+              <input
+                id="roomId"
+                type="text"
+                [(ngModel)]="roomId"
+                placeholder="Nhập mã phòng hoặc tạo mới"
+                class="field"
+              />
+              <button 
+                class="btn-generate" 
+                (click)="generateRoomId()"
+                title="Tạo mã phòng mới"
+              >
+                <mat-icon>casino</mat-icon>
+                <span>Tạo mới</span>
+              </button>
+            </div>
+          </div>
+
+          <button
+            class="btn-join"
+            (click)="startCall()"
+            [disabled]="!roomId"
           >
-            <mat-icon>casino</mat-icon>
-            <span>Tạo mới</span>
+            <mat-icon>video_call</mat-icon>
+            <span>Tham gia</span>
           </button>
         </div>
-      </div>
-
-      <button
-        class="btn-join"
-        (click)="startCall()"
-        [disabled]="!roomId || isConnecting"
-      >
-        @if (isConnecting) {
-          <div class="spinner"></div>
-          <span>Đang kết nối...</span>
-        } @else {
-          <mat-icon>video_call</mat-icon>
-          <span>Tham gia</span>
-        }
-      </button>
       </div>
     </div>
   }
@@ -89,60 +136,148 @@
   <!-- Video area (during call) -->
   @if (callState?.isInCall) {
     <div class="video-area">
-      <!-- Remote videos -->
-      <div class="remote-videos" #remoteVideosContainer>
-        @if ((callState?.peers?.size ?? 0) === 0) {
-          <div class="no-peers">
-            <p>Đang đợi người khác tham gia...</p>
+      @if (getScreenSharingStream()) {
+        <!-- Layout with screen sharing: 70% screen + 30% participants -->
+        <div class="screen-share-layout">
+          <!-- Main screen share (70%) -->
+          <div class="screen-share-main">
+            <video
+              #screenVideo
+              autoplay
+              playsinline
+              [srcObject]="getScreenSharingStream()"
+            ></video>
+            <div class="screen-label">
+              <mat-icon>screen_share</mat-icon>
+              <span>Đang chia sẻ màn hình</span>
+            </div>
           </div>
-        }
-      </div>
 
-    <!-- Local video -->
-    <div class="local-video-container">
-        <video
-          #localVideo
-          autoplay
-          muted
-          playsinline
-          [class.video-disabled]="!callState?.isVideoEnabled"
-        ></video>
-        @if (!callState?.isVideoEnabled) {
-          <div class="video-overlay">
-            <mat-icon>videocam_off</mat-icon>
-            <span>Camera tắt</span>
+          <!-- Participants sidebar (30%) -->
+          <div class="participants-sidebar">
+            <div class="sidebar-header">
+              <mat-icon>people</mat-icon>
+              <span>Người tham gia ({{ getParticipantCount() }})</span>
+            </div>
+            
+            <!-- All participants list (local + remote) -->
+            <div class="participants-list">
+              <!-- Local video -->
+              <div class="participant-video">
+                <video
+                  #localVideo
+                  autoplay
+                  muted
+                  playsinline
+                  [class.video-disabled]="!callState?.isVideoEnabled"
+                ></video>
+                @if (!callState?.isVideoEnabled) {
+                  <div class="video-overlay">
+                    <mat-icon>videocam_off</mat-icon>
+                  </div>
+                }
+                <span class="participant-name">
+                  Bạn
+                </span>
+                @if (!callState?.isAudioEnabled) {
+                  <div class="mic-status">
+                    <mat-icon>mic_off</mat-icon>
+                  </div>
+                }
+              </div>
+
+              <!-- Remote participants container -->
+              <div #remoteVideosContainer class="remote-participants-container"></div>
+              
+              @if ((callState?.peers?.size ?? 0) === 0) {
+                <div class="no-peers-small">
+                  <mat-icon>hourglass_empty</mat-icon>
+                  <p>Đang đợi người khác...</p>
+                </div>
+              }
+            </div>
           </div>
-        }
+        </div>
+      } @else {
+        <!-- Normal layout without screen sharing -->
+        <div class="normal-layout">
+          <!-- Remote videos grid -->
+          <div 
+            class="remote-videos" 
+            [class.one-on-one]="(callState?.peers?.size ?? 0) === 1"
+            #remoteVideosContainer
+          >
+            @if ((callState?.peers?.size ?? 0) === 0) {
+              <div class="no-peers">
+                <p>Đang đợi người khác tham gia...</p>
+              </div>
+            }
+          </div>
+
+          <!-- Local video (picture-in-picture) -->
+          <div class="local-video-container">
+            <video
+              #localVideo
+              autoplay
+              muted
+              playsinline
+              [class.video-disabled]="!callState?.isVideoEnabled"
+            ></video>
+            @if (!callState?.isVideoEnabled) {
+              <div class="video-overlay">
+                <mat-icon>videocam_off</mat-icon>
+                <span>Camera tắt</span>
+              </div>
+            }
+            <div class="user-name-label">
+              <span>{{ userName }}</span>
+            </div>
+            @if (!callState?.isAudioEnabled) {
+              <div class="mic-status">
+                <mat-icon>mic_off</mat-icon>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Controls -->
+      <div class="call-controls">
+        <button
+          class="btn-control"
+          [class.active]="callState?.isVideoEnabled"
+          (click)="toggleVideo()"
+          title="Bật/tắt camera"
+        >
+          <mat-icon>{{ callState?.isVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
+        </button>
+
+        <button
+          class="btn-control"
+          [class.active]="callState?.isAudioEnabled"
+          (click)="toggleAudio()"
+          title="Bật/tắt mic"
+        >
+          <mat-icon>{{ callState?.isAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
+        </button>
+
+        <button
+          class="btn-control"
+          [class.active]="callState?.isScreenSharing"
+          (click)="toggleScreenShare()"
+          title="Chia sẻ màn hình"
+        >
+          <mat-icon>{{ callState?.isScreenSharing ? 'stop_screen_share' : 'screen_share' }}</mat-icon>
+        </button>
+
+        <button
+          class="btn-control btn-end"
+          (click)="endCall()"
+          title="Kết thúc cuộc gọi"
+        >
+          <mat-icon>call_end</mat-icon>
+        </button>
       </div>
-
-    <!-- Controls -->
-    <div class="call-controls">
-      <button
-        class="btn-control"
-        [class.active]="callState?.isVideoEnabled"
-        (click)="toggleVideo()"
-        title="Bật/tắt camera"
-      >
-        <mat-icon>{{ callState?.isVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
-      </button>
-
-      <button
-        class="btn-control"
-        [class.active]="callState?.isAudioEnabled"
-        (click)="toggleAudio()"
-        title="Bật/tắt mic"
-      >
-        <mat-icon>{{ callState?.isAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
-      </button>
-
-      <button
-        class="btn-control btn-end"
-        (click)="endCall()"
-        title="Kết thúc cuộc gọi"
-      >
-        <mat-icon>call_end</mat-icon>
-      </button>
-    </div>
     </div>
   }
 </div>
