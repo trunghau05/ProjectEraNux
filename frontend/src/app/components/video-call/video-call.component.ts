@@ -19,6 +19,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('localVideo') localVideo!: ElementRef<HTMLVideoElement>;
   @ViewChild('remoteVideosContainer') remoteVideosContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('previewVideo') previewVideo!: ElementRef<HTMLVideoElement>;
+  @ViewChild('chatTextarea') chatTextarea?: ElementRef<HTMLTextAreaElement>;
 
   roomId: string = '';
   userId: string = '';
@@ -53,6 +54,18 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   private teacherService = inject(TeachersService);
   private visibilityHandler: (() => void) | null = null;
   private focusHandler: (() => void) | null = null;
+
+  // Chat sidebar states
+  isChatOpen: boolean = false;
+  chatMessages: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    message: string;
+    timestamp: Date;
+    isOwn: boolean;
+  }> = [];
+  newMessage: string = '';
 
   constructor(
     private webrtcService: WebrtcService,
@@ -127,6 +140,25 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       .pipe(takeUntil(this.destroy$))
       .subscribe(error => {
         this.errorMessage = error;
+      });
+
+    // Subscribe to incoming chat messages
+    this.webrtcService.message$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(message => {
+        this.ngZone.run(() => {
+          const chatMsg = {
+            id: Date.now().toString() + Math.random(),
+            userId: message.userId,
+            userName: message.userName,
+            message: message.message,
+            timestamp: new Date(message.timestamp),
+            isOwn: false
+          };
+          this.chatMessages.push(chatMsg);
+          setTimeout(() => this.scrollChatToBottom(), 50);
+          this.cdr.markForCheck();
+        });
       });
 
     // Handle visibility change to keep videos playing
@@ -915,5 +947,86 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.recordingDuration = 0;
       this.recordingDurationDisplay = '00:00';
     }
+  }
+
+  /**
+   * Toggle chat sidebar
+   */
+  toggleChat(): void {
+    this.isChatOpen = !this.isChatOpen;
+  }
+
+  /**
+   * Close chat sidebar
+   */
+  closeChat(): void {
+    this.isChatOpen = false;
+  }
+
+  /**
+   * Send chat message
+   */
+  sendMessage(): void {
+    if (!this.newMessage.trim()) {
+      return;
+    }
+
+    const messageText = this.newMessage.trim();
+    
+    // Add own message to display
+    const message = {
+      id: Date.now().toString() + Math.random(),
+      userId: this.userId,
+      userName: this.userName,
+      message: messageText,
+      timestamp: new Date(),
+      isOwn: true
+    };
+
+    this.chatMessages.push(message);
+    this.newMessage = '';
+
+    // Reset textarea height
+    if (this.chatTextarea) {
+      this.chatTextarea.nativeElement.style.height = 'auto';
+    }
+
+    // Send message to other participants via WebRTC data channel
+    this.webrtcService.sendChatMessage(messageText, this.userId, this.userName);
+    console.log('Sent message to peers');
+    
+    // Scroll to bottom after a short delay
+    setTimeout(() => {
+      this.scrollChatToBottom();
+    }, 50);
+  }
+
+  /**
+   * Scroll chat to bottom
+   */
+  private scrollChatToBottom(): void {
+    const chatBody = document.querySelector('.chat-messages');
+    if (chatBody) {
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+  }
+
+  /**
+   * Handle Enter key in chat input
+   */
+  onChatKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
+  }
+
+  /**
+   * Auto-resize textarea based on content
+   */
+  onChatInput(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
   }
 }

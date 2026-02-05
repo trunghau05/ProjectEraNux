@@ -10,9 +10,17 @@ export interface Peer {
   screenStream?: MediaStream;
   peerConnection?: RTCPeerConnection;
   screenPeerConnection?: RTCPeerConnection;
+  dataChannel?: RTCDataChannel;
   isScreenSharing?: boolean;
   isVideoEnabled?: boolean;
   isAudioEnabled?: boolean;
+}
+
+export interface ChatMessage {
+  userId: string;
+  userName: string;
+  message: string;
+  timestamp: number;
 }
 
 export interface CallState {
@@ -60,6 +68,9 @@ export class WebrtcService {
 
   private errorSubject = new Subject<string>();
   public error$ = this.errorSubject.asObservable();
+
+  private messageSubject = new Subject<ChatMessage>();
+  public message$ = this.messageSubject.asObservable();
 
   constructor() {}
 
@@ -448,6 +459,23 @@ export class WebrtcService {
           this.removePeer(peer.socketId);
         }
       };
+
+      // Setup data channel for chat messages
+      if (shouldCreateOffer) {
+        // Create data channel (only the offerer creates it)
+        const dataChannel = peerConnection.createDataChannel('chat');
+        this.setupDataChannel(dataChannel, peer);
+        peer.dataChannel = dataChannel;
+        console.log('Created data channel for:', peer.socketId);
+      } else {
+        // Listen for data channel (answerer receives it)
+        peerConnection.ondatachannel = (event) => {
+          const dataChannel = event.channel;
+          this.setupDataChannel(dataChannel, peer);
+          peer.dataChannel = dataChannel;
+          console.log('Received data channel from:', peer.socketId);
+        };
+      }
       
       // Cập nhật callState với peer mới
       this.callState.peers = new Map(this.callState.peers);
@@ -745,6 +773,61 @@ export class WebrtcService {
       this.updateCallState();
       console.log('Screen sharing stopped');
     }
+  }
+
+  /**
+   * Setup data channel for chat messages
+   */
+  private setupDataChannel(dataChannel: RTCDataChannel, peer: Peer): void {
+    dataChannel.onopen = () => {
+      console.log('Data channel opened with:', peer.socketId);
+    };
+
+    dataChannel.onclose = () => {
+      console.log('Data channel closed with:', peer.socketId);
+    };
+
+    dataChannel.onerror = (error) => {
+      console.error('Data channel error with', peer.socketId, error);
+    };
+
+    dataChannel.onmessage = (event) => {
+      try {
+        const message: ChatMessage = JSON.parse(event.data);
+        console.log('Received message from', peer.socketId, message);
+        this.messageSubject.next(message);
+      } catch (error) {
+        console.error('Error parsing message:', error);
+      }
+    };
+  }
+
+  /**
+   * Send chat message to all peers
+   */
+  sendChatMessage(message: string, userId: string, userName: string): void {
+    const chatMessage: ChatMessage = {
+      userId,
+      userName,
+      message,
+      timestamp: Date.now()
+    };
+
+    const messageStr = JSON.stringify(chatMessage);
+    let sentCount = 0;
+
+    this.callState.peers.forEach(peer => {
+      if (peer.dataChannel && peer.dataChannel.readyState === 'open') {
+        try {
+          peer.dataChannel.send(messageStr);
+          sentCount++;
+        } catch (error) {
+          console.error('Error sending message to', peer.socketId, error);
+        }
+      }
+    });
+
+    console.log(`Sent message to ${sentCount} peers`);
   }
 
   /**

@@ -21,6 +21,30 @@
           <span style="color: white;">Copy Link</span>
         </button>
       </div>
+      <div class="header-actions">
+        <button
+          class="btn-header-action"
+          [class.recording]="isRecording"
+          (click)="toggleRecording()"
+          title="{{ isRecording ? 'Dừng ghi' : 'Ghi màn hình' }}"
+        >
+          <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
+          @if (isRecording) {
+            <span class="recording-pulse"></span>
+          }
+        </button>
+        <button
+          class="btn-header-action"
+          [class.active]="isChatOpen"
+          (click)="toggleChat()"
+          title="Nhắn tin"
+        >
+          <mat-icon>chat</mat-icon>
+          @if (chatMessages.length > 0 && !isChatOpen) {
+            <span class="chat-badge">{{ chatMessages.length }}</span>
+          }
+        </button>
+      </div>
     }
   </div>
 
@@ -277,15 +301,6 @@
         </button>
 
         <button
-          class="btn-control btn-record"
-          [class.recording]="isRecording"
-          (click)="toggleRecording()"
-          title="{{ isRecording ? 'Dừng ghi' : 'Ghi màn hình' }}"
-        >
-          <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
-        </button>
-
-        <button
           class="btn-control btn-end"
           (click)="endCall()"
           title="Kết thúc cuộc gọi"
@@ -294,5 +309,71 @@
         </button>
       </div>
     </div>
+  }
+
+  <!-- Chat Sidebar -->
+  <div class="chat-sidebar" [class.open]="isChatOpen">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-title">
+        <mat-icon>chat</mat-icon>
+        <h3>Tin nhắn</h3>
+      </div>
+      <button class="btn-close-chat" (click)="closeChat()" title="Đóng">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="chat-messages">
+      @if (chatMessages.length === 0) {
+        <div class="chat-empty">
+          <mat-icon>chat_bubble_outline</mat-icon>
+          <p>Chưa có tin nhắn nào</p>
+          <span>Gửi tin nhắn đầu tiên của bạn!</span>
+        </div>
+      } @else {
+        @for (msg of chatMessages; track msg.id) {
+          <div class="chat-message" [class.own]="msg.isOwn">
+            <div class="message-avatar">
+              <span>{{ msg.userName.charAt(0).toUpperCase() }}</span>
+            </div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="message-name">{{ msg.userName }}</span>
+                <span class="message-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
+              </div>
+              <div class="message-text">{{ msg.message }}</div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Chat Input -->
+    <div class="chat-input">
+      <textarea
+        #chatTextarea
+        [(ngModel)]="newMessage"
+        (input)="onChatInput($event)"
+        (keydown)="onChatKeydown($event)"
+        placeholder="Nhập tin nhắn..."
+        rows="1"
+        maxlength="500"
+      ></textarea>
+      <button
+        class="btn-send"
+        [disabled]="!newMessage.trim()"
+        (click)="sendMessage()"
+        title="Gửi"
+      >
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Chat Overlay (backdrop) -->
+  @if (isChatOpen) {
+    <div class="chat-overlay" (click)="closeChat()"></div>
   }
 </div>
