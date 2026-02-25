@@ -24,6 +24,9 @@ export interface SessionDetail {
     start_at: string;
     end_at: string;
     status?: SessionStatusEnum;
+    recording_url?: string | null;
+    recording_public_id?: string | null;
+    recording_uploaded_at?: string | null;
 }
 export namespace SessionDetail {
 }

@@ -7,6 +7,7 @@ import { WebrtcService, CallState } from '../../services/webrtc.service';
 import { UserService } from '../../services/user.service';
 import { StudentsService, TeachersService } from '../../apis';
 import { Subject, takeUntil, interval } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-video-call',
@@ -40,9 +41,14 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   isRecording: boolean = false;
   recordingDuration = 0;
   recordingDurationDisplay = '00:00';
+  isUploadingRecording: boolean = false;
+  recordingUploadMessage: string = '';
+  recordingUploadStatus: 'idle' | 'success' | 'error' = 'idle';
+  latestRecordingUrl: string = '';
   private mediaRecorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
   private recordingTimerInterval: any = null;
+  private readonly backendBaseUrl = environment.apiBaseUrl;
 
   private destroy$ = new Subject<void>();
   private remoteVideoElements = new Map<string, HTMLDivElement>();
@@ -57,6 +63,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   // Chat sidebar states
   isChatOpen: boolean = false;
+  hasUnreadMessages: boolean = false;
   chatMessages: Array<{
     id: string;
     userId: string;
@@ -156,6 +163,12 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
             isOwn: false
           };
           this.chatMessages.push(chatMsg);
+          
+          // Set unread indicator if chat is closed
+          if (!this.isChatOpen) {
+            this.hasUnreadMessages = true;
+          }
+          
           setTimeout(() => this.scrollChatToBottom(), 50);
           this.cdr.markForCheck();
         });
@@ -224,7 +237,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     // Check if user is logged in
     if (!user || !user.id || user.id === 0) {
       console.error('No user found in session');
-      this.errorMessage = 'Vui lòng đăng nhập để sử dụng video call';
+      this.errorMessage = 'Please sign in to use video call.';
       // Redirect to login after 2 seconds
       setTimeout(() => {
         this.router.navigate(['/login']);
@@ -277,12 +290,12 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
    */
   async startCall(): Promise<void> {
     if (!this.roomId) {
-      this.errorMessage = 'Vui lòng nhập mã phòng hoặc tạo phòng mới';
+      this.errorMessage = 'Please enter a room code or generate a new one.';
       return;
     }
 
     if (!this.userId) {
-      this.errorMessage = 'Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.';
+      this.errorMessage = 'User information not found. Please sign in again.';
       return;
     }
 
@@ -317,12 +330,12 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
       
     } catch (error: any) {
-      this.errorMessage = error.message || 'Không thể khởi động cuộc gọi';
+      this.errorMessage = error.message || 'Unable to start the call.';
       console.error('Start call error:', error);
       
       // If it's a permission error, show a more helpful message
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        this.errorMessage = 'Vui lòng cho phép truy cập camera và microphone';
+        this.errorMessage = 'Please allow access to camera and microphone.';
       }
     }
   }
@@ -471,6 +484,19 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     const remoteStreams = this.webrtcService.getRemoteStreams();
+    const sortedRemoteStreams = remoteStreams
+      .map((item, index) => ({ item, index }))
+      .sort((a, b) => {
+        const aVideoEnabled = a.item.peer.isVideoEnabled !== false;
+        const bVideoEnabled = b.item.peer.isVideoEnabled !== false;
+
+        if (aVideoEnabled === bVideoEnabled) {
+          return a.index - b.index;
+        }
+
+        return aVideoEnabled ? -1 : 1;
+      })
+      .map(({ item }) => item);
     console.log('Updating video elements, stream count:', remoteStreams.length, 'in layout:', this.isAnyoneScreenSharing() ? 'screen-share' : 'normal');
     
     // Remove video elements for disconnected peers or wrong container
@@ -486,7 +512,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
 
     // Add video elements for new peers only
-    remoteStreams.forEach(({ stream, peer }) => {
+    sortedRemoteStreams.forEach(({ stream, peer }) => {
       const existingElement = this.remoteVideoElements.get(stream.id);
       const needsNewElement = !existingElement || !container.contains(existingElement);
       
@@ -642,6 +668,14 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
       }
     });
+
+    // Ensure visual order always matches camera priority even for existing elements
+    sortedRemoteStreams.forEach(({ stream }) => {
+      const wrapperElement = this.remoteVideoElements.get(stream.id);
+      if (wrapperElement && container.contains(wrapperElement)) {
+        container.appendChild(wrapperElement);
+      }
+    });
   }
 
   /**
@@ -690,7 +724,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   copyRoomLink(): void {
     const link = `${window.location.origin}/video-call/${this.roomId}`;
     navigator.clipboard.writeText(link).then(() => {
-      alert('Đã copy link phòng!');
+      alert('Room link copied!');
     });
   }
 
@@ -719,7 +753,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       }, 100);
     } catch (error) {
       console.error('Failed to initialize preview:', error);
-      this.errorMessage = 'Không thể truy cập camera/microphone';
+      this.errorMessage = 'Unable to access camera/microphone.';
     }
   }
 
@@ -836,14 +870,18 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       };
 
       this.mediaRecorder.onstop = () => {
-        this.downloadRecording();
-        
+        const recordedBlob = this.buildRecordingBlob();
+
         // Cleanup streams
         displayStream.getTracks().forEach(track => track.stop());
         if (micStream) {
           micStream.getTracks().forEach(track => track.stop());
         }
         audioContext.close();
+
+        if (recordedBlob) {
+          void this.uploadRecording(recordedBlob);
+        }
       };
 
       // Handle when user stops sharing screen
@@ -860,7 +898,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       console.log('Screen recording started');
     } catch (error) {
       console.error('Failed to start recording:', error);
-      this.errorMessage = 'Không thể bắt đầu ghi màn hình. Vui lòng thử lại.';
+      this.errorMessage = 'Unable to start screen recording. Please try again.';
     }
   }
 
@@ -887,16 +925,75 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  /**
-   * Download the recorded video
-   */
-  private downloadRecording(): void {
+  private buildRecordingBlob(): Blob | null {
     if (this.recordedChunks.length === 0) {
-      console.warn('No recorded data to download');
-      return;
+      console.warn('No recorded data to process');
+      return null;
     }
 
     const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
+    this.recordedChunks = [];
+    return blob;
+  }
+
+  /**
+   * Upload recorded video to backend (Cloudinary)
+   */
+  private async uploadRecording(blob: Blob): Promise<void> {
+    this.isUploadingRecording = true;
+    this.recordingUploadMessage = 'Uploading video to Cloudinary...';
+    this.recordingUploadStatus = 'idle';
+    this.latestRecordingUrl = '';
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const fileName = `video-call-${this.roomId || 'room'}-${timestamp}.webm`;
+    const formData = new FormData();
+    formData.append('file', blob, fileName);
+    formData.append('roomId', this.roomId || 'unknown-room');
+    formData.append('userId', this.userId || 'anonymous');
+
+    try {
+      const response = await fetch(`${this.backendBaseUrl}/api/media/upload-recording/`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.success) {
+        console.error('Upload failed:', result?.message || 'Unknown backend error');
+        throw new Error('Upload failed. Please try again.');
+      }
+
+      this.latestRecordingUrl = result.secure_url || '';
+      this.recordingUploadMessage = this.latestRecordingUrl
+        ? 'Saved successfully.'
+        : 'Upload succeeded but no video link was returned.';
+      this.recordingUploadStatus = this.latestRecordingUrl ? 'success' : 'error';
+      this.cdr.markForCheck();
+    } catch (error: any) {
+      console.error('Failed to upload recording:', error);
+      this.recordingUploadMessage = 'Upload failed.';
+      this.recordingUploadStatus = 'error';
+      this.errorMessage = 'Unable to upload to Cloudinary. A local copy was saved to avoid data loss.';
+      this.downloadRecording(blob);
+      this.cdr.markForCheck();
+    } finally {
+      this.isUploadingRecording = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  openLatestRecording(): void {
+    if (this.latestRecordingUrl) {
+      window.open(this.latestRecordingUrl, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  /**
+   * Download the recorded video
+   */
+  private downloadRecording(blob: Blob): void {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
@@ -916,7 +1013,6 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     }, 100);
 
     console.log('Recording downloaded');
-    this.recordedChunks = [];
   }
 
   /**
@@ -954,6 +1050,11 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
    */
   toggleChat(): void {
     this.isChatOpen = !this.isChatOpen;
+    
+    // Clear unread indicator when opening chat
+    if (this.isChatOpen) {
+      this.hasUnreadMessages = false;
+    }
   }
 
   /**
@@ -961,6 +1062,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
    */
   closeChat(): void {
     this.isChatOpen = false;
+    // Keep hasUnreadMessages state - it will be set again if new messages arrive
   }
 
   /**

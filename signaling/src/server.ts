@@ -6,13 +6,37 @@ import cors from 'cors';
 const app = express();
 const server = http.createServer(app);
 
+const parseAllowedOrigins = (): string[] | '*' => {
+  const rawOrigins = (process.env.CORS_ORIGINS || process.env.CORS_ORIGIN || '').trim();
+
+  if (!rawOrigins) {
+    return ['http://localhost:4200'];
+  }
+
+  if (rawOrigins === '*') {
+    return '*';
+  }
+
+  return rawOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+};
+
+const allowedOrigins = parseAllowedOrigins();
+
 // Configure CORS
-app.use(cors());
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true
+  })
+);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:4200", // Angular dev server
-    methods: ["GET", "POST"],
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
     credentials: true
   }
 });

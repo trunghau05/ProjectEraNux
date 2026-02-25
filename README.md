@@ -10,6 +10,7 @@ pip install djangorestframework
 pip install google-genai
 pip install mongoengine
 pip install mongoengine dnspython
+pip install cloudinary
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
@@ -28,6 +29,7 @@ npm run start
 ng build
 ng serve
 ---
+python manage.py runserver
 python manage.py spectacular --file openapi.json
 openapi-generator-cli generate -i http://localhost:8000/api/schema/ -g typescript-angular -o src/app/apis --additional-properties=providedInRoot=true
 

@@ -27,3 +27,4 @@ export * from './teacher';
 export * from './teacherRoleEnum';
 export * from './timeSlot';
 export * from './timeSlotStatusEnum';
+export * from './uploadRecordingResponse';

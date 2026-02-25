@@ -6,6 +6,7 @@ api/api.ts
 api/bookings.service.ts
 api/classes.service.ts
 api/login.service.ts
+api/media.service.ts
 api/rooms.service.ts
 api/schedules.service.ts
 api/sessions.service.ts
@@ -46,6 +47,7 @@ model/teacher.ts
 model/teacherRoleEnum.ts
 model/timeSlot.ts
 model/timeSlotStatusEnum.ts
+model/uploadRecordingResponse.ts
 param.ts
 provide-api.ts
 query.params.ts

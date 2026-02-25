@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface Peer {
   socketId: string;
@@ -39,7 +40,7 @@ export interface CallState {
 })
 export class WebrtcService {
   private socket: Socket | null = null;
-  private readonly SIGNALING_SERVER = 'http://localhost:3000';
+  private readonly SIGNALING_SERVER = environment.signalingServerUrl;
   
   // ICE servers (STUN/TURN)
   private readonly iceServers: RTCConfiguration = {
@@ -359,6 +360,7 @@ export class WebrtcService {
       const remoteStream = new MediaStream();
       const screenStream = new MediaStream();
       const tracksReceived: Array<{kind: string, label: string, streamId: string}> = [];
+      let primaryVideoStreamId: string | null = null;
       
       peerConnection.ontrack = (event) => {
         const track = event.track;
@@ -376,25 +378,23 @@ export class WebrtcService {
         });
         
         // Phát hiện screen share track dựa trên:
-        // 1. Label chứa "screen" (Chrome/Edge screen share có label như "screen:0:0")
-        // 2. Peer có flag isScreenSharing VÀ đây là video track từ stream riêng biệt
+        // 1. Label chứa "screen"/"display"
+        // 2. Video track đến từ streamId khác với camera stream đầu tiên
+        // 3. Fallback: khi đã có camera video và peer báo đang share
         const trackLabel = track.label.toLowerCase();
         const isScreenByLabel = trackLabel.includes('screen') || trackLabel.includes('display');
-        
-        // Nếu peer đang share, ta cần phân biệt giữa camera stream và screen stream
-        // Camera stream thường có cả audio + video
-        // Screen stream thường chỉ có video, và có label hoặc streamId khác
+
         let isScreenShareTrack = false;
-        
-        if (peer.isScreenSharing && track.kind === 'video') {
+
+        if (track.kind === 'video') {
           if (isScreenByLabel) {
-            // Chắc chắn là screen share nếu label có "screen"
             isScreenShareTrack = true;
-          } else {
-            // Nếu không có label rõ ràng, check xem đã có camera video chưa
-            // Nếu đã có camera video trong remoteStream, video này phải là screen
-            const hasExistingCameraVideo = remoteStream.getVideoTracks().length > 0;
-            isScreenShareTrack = hasExistingCameraVideo;
+          } else if (!primaryVideoStreamId) {
+            primaryVideoStreamId = streamId;
+          } else if (streamId !== primaryVideoStreamId) {
+            isScreenShareTrack = true;
+          } else if (peer.isScreenSharing && remoteStream.getVideoTracks().length > 0) {
+            isScreenShareTrack = true;
           }
         }
         

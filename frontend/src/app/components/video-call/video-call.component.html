@@ -8,41 +8,56 @@
     @if (callState?.isInCall) {
       <div class="room-info">
         <span>Room: <strong>{{ roomId }}</strong></span>
-        <span class="participants">{{ getParticipantCount() }} người</span>
+        <span class="participants">{{ getParticipantCount() }} people</span>
         <span class="call-duration">{{ callDurationDisplay }}</span>
         @if (isRecording) {
           <span class="recording-indicator">
             <span class="recording-dot"></span>
-            <span>Ghi: {{ recordingDurationDisplay }}</span>
+            <span>Rec: {{ recordingDurationDisplay }}</span>
           </span>
         }
-        <button class="btn-copy" (click)="copyRoomLink()">
-          <mat-icon>content_copy</mat-icon>
-          <span style="color: white;">Copy Link</span>
-        </button>
+        @if (isUploadingRecording) {
+          <span class="recording-indicator uploading">
+            <span>Uploading video...</span>
+          </span>
+        }
+        @if (recordingUploadMessage && !isUploadingRecording) {
+          <span class="recording-indicator" [class.success]="recordingUploadStatus === 'success'" [class.error]="recordingUploadStatus === 'error'">
+            <span>{{ recordingUploadMessage }}</span>
+          </span>
+        }
+        @if (latestRecordingUrl) {
+          <button class="btn-header-action btn-play" (click)="openLatestRecording()" title="Play recording">
+            <mat-icon>play_circle</mat-icon>
+          </button>
+        }
       </div>
       <div class="header-actions">
         <button
-          class="btn-header-action"
-          [class.recording]="isRecording"
-          (click)="toggleRecording()"
-          title="{{ isRecording ? 'Dừng ghi' : 'Ghi màn hình' }}"
+        class="btn-header-action"
+        [class.recording]="isRecording"
+        (click)="toggleRecording()"
+        title="{{ isRecording ? 'Stop recording' : 'Record screen' }}"
         >
-          <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
-          @if (isRecording) {
-            <span class="recording-pulse"></span>
-          }
+        <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
+        @if (isRecording) {
+          <span class="recording-pulse"></span>
+        }
         </button>
         <button
           class="btn-header-action"
           [class.active]="isChatOpen"
           (click)="toggleChat()"
-          title="Nhắn tin"
+          title="Chat"
         >
           <mat-icon>chat</mat-icon>
-          @if (chatMessages.length > 0 && !isChatOpen) {
-            <span class="chat-badge">{{ chatMessages.length }}</span>
+          @if (hasUnreadMessages && !isChatOpen) {
+            <span class="unread-dot"></span>
           }
+        </button>
+        <button class="btn-copy" (click)="copyRoomLink()">
+          <mat-icon>content_copy</mat-icon>
+          <span style="color: white;">Copy link</span>
         </button>
       </div>
     }
@@ -75,7 +90,7 @@
           @if (!isPreviewVideoEnabled) {
             <div class="video-overlay">
               <mat-icon>videocam_off</mat-icon>
-              <span>Camera tắt</span>
+              <span>Camera off</span>
             </div>
           }
 
@@ -90,20 +105,20 @@
               class="btn-preview-control"
               [class.active]="isPreviewVideoEnabled"
               (click)="togglePreviewVideo()"
-              title="Bật/tắt camera"
+              title="Toggle camera"
             >
               <mat-icon>{{ isPreviewVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
-              <span>{{ isPreviewVideoEnabled ? 'Tắt camera' : 'Bật camera' }}</span>
+              <span>{{ isPreviewVideoEnabled ? 'Turn camera off' : 'Turn camera on' }}</span>
             </button>
 
             <button
               class="btn-preview-control"
               [class.active]="isPreviewAudioEnabled"
               (click)="togglePreviewAudio()"
-              title="Bật/tắt mic"
+              title="Toggle mic"
             >
               <mat-icon>{{ isPreviewAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
-              <span>{{ isPreviewAudioEnabled ? 'Tắt mic' : 'Bật mic' }}</span>
+              <span>{{ isPreviewAudioEnabled ? 'Mute mic' : 'Unmute mic' }}</span>
             </button>
           </div>
         </div>
@@ -111,14 +126,14 @@
 
       <!-- Right side: Room form -->
       <div class="room-form-section">
-        <h3>Tham gia cuộc gọi video</h3>
+        <h3>Join the video call</h3>
 
         <div class="form-container">
           <!-- User info display -->
           <div class="user-info-display">
             <div class="info-item">
               <mat-icon class="info-icon">person</mat-icon>
-              <span class="label">Tên:</span>
+              <span class="label">Name:</span>
               <span class="value">{{ userName }}</span>
             </div>
             <div class="info-item">
@@ -130,22 +145,22 @@
 
           <!-- Room ID input -->
           <div class="form-group">
-            <label for="roomId">Mã phòng</label>
+            <label for="roomId">Room code</label>
             <div class="input-with-button">
               <input
                 id="roomId"
                 type="text"
                 [(ngModel)]="roomId"
-                placeholder="Nhập mã phòng hoặc tạo mới"
+                placeholder="Enter a room code or create a new one"
                 class="field"
               />
               <button 
                 class="btn-generate" 
                 (click)="generateRoomId()"
-                title="Tạo mã phòng mới"
+                title="Generate a new room code"
               >
                 <mat-icon>casino</mat-icon>
-                <span>Tạo mới</span>
+                <span>Generate</span>
               </button>
             </div>
           </div>
@@ -156,7 +171,7 @@
             [disabled]="!roomId"
           >
             <mat-icon>video_call</mat-icon>
-            <span>Tham gia</span>
+            <span>Join</span>
           </button>
         </div>
       </div>
@@ -179,7 +194,7 @@
             ></video>
             <div class="screen-label">
               <mat-icon>screen_share</mat-icon>
-              <span>Đang chia sẻ màn hình</span>
+              <span>Screen sharing</span>
             </div>
           </div>
 
@@ -187,7 +202,7 @@
           <div class="participants-sidebar">
             <div class="sidebar-header">
               <mat-icon>people</mat-icon>
-              <span>Người tham gia ({{ getParticipantCount() }})</span>
+              <span>Participants ({{ getParticipantCount() }})</span>
             </div>
             
             <!-- All participants list (local + remote) -->
@@ -207,7 +222,7 @@
                   </div>
                 }
                 <span class="participant-name">
-                  Bạn
+                  You
                 </span>
                 @if (!callState?.isAudioEnabled) {
                   <div class="mic-status">
@@ -222,7 +237,7 @@
               @if ((callState?.peers?.size ?? 0) === 0) {
                 <div class="no-peers-small">
                   <mat-icon>hourglass_empty</mat-icon>
-                  <p>Đang đợi người khác...</p>
+                  <p>Waiting for others...</p>
                 </div>
               }
             </div>
@@ -239,7 +254,7 @@
           >
             @if ((callState?.peers?.size ?? 0) === 0) {
               <div class="no-peers">
-                <p>Đang đợi người khác tham gia...</p>
+                <p>Waiting for others to join...</p>
               </div>
             }
           </div>
@@ -256,7 +271,7 @@
             @if (!callState?.isVideoEnabled) {
               <div class="video-overlay">
                 <mat-icon>videocam_off</mat-icon>
-                <span>Camera tắt</span>
+                <span>Camera off</span>
               </div>
             }
             <div class="user-name-label">
@@ -277,7 +292,7 @@
           class="btn-control"
           [class.active]="callState?.isVideoEnabled"
           (click)="toggleVideo()"
-          title="Bật/tắt camera"
+          title="Toggle camera"
         >
           <mat-icon>{{ callState?.isVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
         </button>
@@ -286,7 +301,7 @@
           class="btn-control"
           [class.active]="callState?.isAudioEnabled"
           (click)="toggleAudio()"
-          title="Bật/tắt mic"
+          title="Toggle mic"
         >
           <mat-icon>{{ callState?.isAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
         </button>
@@ -295,7 +310,7 @@
           class="btn-control"
           [class.active]="callState?.isScreenSharing"
           (click)="toggleScreenShare()"
-          title="Chia sẻ màn hình"
+          title="Share screen"
         >
           <mat-icon>{{ callState?.isScreenSharing ? 'stop_screen_share' : 'screen_share' }}</mat-icon>
         </button>
@@ -303,7 +318,7 @@
         <button
           class="btn-control btn-end"
           (click)="endCall()"
-          title="Kết thúc cuộc gọi"
+          title="End call"
         >
           <mat-icon>call_end</mat-icon>
         </button>
@@ -317,9 +332,9 @@
     <div class="chat-header">
       <div class="chat-header-title">
         <mat-icon>chat</mat-icon>
-        <h3>Tin nhắn</h3>
+        <h3>Messages</h3>
       </div>
-      <button class="btn-close-chat" (click)="closeChat()" title="Đóng">
+      <button class="btn-close-chat" (click)="closeChat()" title="Close">
         <mat-icon>close</mat-icon>
       </button>
     </div>
@@ -329,8 +344,8 @@
       @if (chatMessages.length === 0) {
         <div class="chat-empty">
           <mat-icon>chat_bubble_outline</mat-icon>
-          <p>Chưa có tin nhắn nào</p>
-          <span>Gửi tin nhắn đầu tiên của bạn!</span>
+          <p>No messages yet</p>
+          <span>Send your first message!</span>
         </div>
       } @else {
         @for (msg of chatMessages; track msg.id) {
@@ -357,7 +372,7 @@
         [(ngModel)]="newMessage"
         (input)="onChatInput($event)"
         (keydown)="onChatKeydown($event)"
-        placeholder="Nhập tin nhắn..."
+        placeholder="Type a message..."
         rows="1"
         maxlength="500"
       ></textarea>
@@ -365,7 +380,7 @@
         class="btn-send"
         [disabled]="!newMessage.trim()"
         (click)="sendMessage()"
-        title="Gửi"
+        title="Send"
       >
         <mat-icon>send</mat-icon>
       </button>

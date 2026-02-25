@@ -4,6 +4,7 @@ from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
 )
+from core.views import UploadRecordingView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -22,4 +23,5 @@ urlpatterns = [
     path('api/sessions/', include('class_sessions.urls')),
     path('api/rooms/', include('rooms.urls')),
     path('api/login/', include('core.urls')),
+    path('api/media/upload-recording/', UploadRecordingView.as_view(), name='upload-recording'),
 ]

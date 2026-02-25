@@ -460,6 +460,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/Login'
           description: ''
+  /api/media/upload-recording/:
+    post:
+      operationId: media_upload_recording_create
+      tags:
+      - media
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadRecordingRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UploadRecordingRequest'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadRecordingResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadRecordingResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadRecordingResponse'
+          description: ''
   /api/rooms/:
     get:
       operationId: rooms_list
@@ -1902,6 +1935,17 @@ components:
           format: date-time
         status:
           $ref: '#/components/schemas/SessionStatusEnum'
+        recording_url:
+          type: string
+          nullable: true
+        recording_public_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        recording_uploaded_at:
+          type: string
+          format: date-time
+          nullable: true
         class_obj:
           type: integer
           nullable: true
@@ -2124,6 +2168,17 @@ components:
           format: date-time
         status:
           $ref: '#/components/schemas/SessionStatusEnum'
+        recording_url:
+          type: string
+          nullable: true
+        recording_public_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        recording_uploaded_at:
+          type: string
+          format: date-time
+          nullable: true
         class_obj:
           type: integer
           nullable: true
@@ -2175,6 +2230,17 @@ components:
           format: date-time
         status:
           $ref: '#/components/schemas/SessionStatusEnum'
+        recording_url:
+          type: string
+          nullable: true
+        recording_public_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        recording_uploaded_at:
+          type: string
+          format: date-time
+          nullable: true
       required:
       - class_obj
       - created_at
@@ -2334,6 +2400,48 @@ components:
       description: |-
         * `available` - Available
         * `booked` - Booked
+    UploadRecordingRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: uri
+        roomId:
+          type: string
+        userId:
+          type: string
+      required:
+      - file
+    UploadRecordingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        secure_url:
+          type: string
+          format: uri
+          nullable: true
+        public_id:
+          type: string
+          nullable: true
+        session_id:
+          type: integer
+          nullable: true
+        duration:
+          type: number
+          format: double
+          nullable: true
+        bytes:
+          type: integer
+          nullable: true
+        format:
+          type: string
+          nullable: true
+      required:
+      - message
+      - success
   securitySchemes:
     basicAuth:
       type: http
