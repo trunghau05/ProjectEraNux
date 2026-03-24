@@ -1,0 +1,22 @@
+<div class="list board-item flex-col">
+  <div class="board-label flex-betw">
+    <span>Class Board</span>
+    <div>
+      <mat-icon>arrow_right_alt</mat-icon>
+    </div>
+  </div>
+  <div class="board flex-col">
+    @for (c of classes; track c.id) {
+      <div class="class-item flex-cen">
+        <div class="flex-col" style="width: 65%; gap: 5px;">
+          <span>{{ c.description }}</span>
+          <p>{{ c.teacher.name }}</p>
+        </div>
+        <div class="flex-cen" style="gap: 10px; width: 35%">
+          <mat-progress-bar mode="determinate" [value]="progressPercent"></mat-progress-bar>
+          <span>{{ progressPercent }}%</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -652,6 +652,30 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/rooms/by-session/{session_id}/:
+    get:
+      operationId: rooms_by_session_retrieve
+      description: Get room by session id
+      parameters:
+      - in: path
+        name: session_id
+        schema:
+          type: integer
+        description: ID của session
+        required: true
+      tags:
+      - rooms
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomDetail'
+          description: ''
   /api/schedules/:
     get:
       operationId: schedules_list

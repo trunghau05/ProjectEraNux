@@ -1,0 +1,135 @@
+.schedule {
+	height: 320px;
+}
+
+.board-item {
+	padding: 20px;
+	background-color: white;
+	border-radius: 10px;
+	height: 305px;
+}
+
+.board {
+	overflow: auto;
+	scrollbar-width: none;
+}
+
+.board-label span {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.board-label mat-icon {
+	height: 15px;
+	width: 15px;
+	font-size: 15px;
+}
+
+.schedule-table {
+	display: flex;
+	overflow: auto;
+	height: calc(100vh - 307px);
+	scrollbar-width: none;
+}
+
+.schedule-table span {
+	font-size: 11px;
+	color: #acacacff;
+	display: block;
+	text-align: center;
+}
+
+.schedule-item {
+	display: flex;
+	flex-direction: column;
+}
+
+.schedule-col {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	width: 180px;
+	border-right: 1px solid #f1f1f1;
+	padding-right: 20px;
+}
+
+.schedule-col:last-child {
+	border-right: none;
+}
+
+.session-teacher {
+	background-color: #7e72bdff !important;
+}
+
+.session-tutor {
+	background-color: #514fe3ff !important;
+}
+
+.session-default {
+	background-color: #6b46c1 !important;
+}
+
+.join-session-btn {
+	margin-top: 6px;
+	width: 100%;
+	border: none;
+	border-radius: 6px;
+	padding: 7px 8px;
+	font-size: 10px;
+	font-weight: 600;
+	background-color: #ffffff;
+	color: #3f2ec2;
+	cursor: pointer;
+	transition: opacity 0.2s ease;
+}
+
+.join-session-btn.join-session-btn-disabled {
+	background-color: rgba(255, 255, 255, 0.25);
+	color: #f4f4f4;
+	cursor: not-allowed;
+}
+
+.join-session-btn:not(.join-session-btn-disabled):hover {
+	opacity: 0.9;
+}
+
+.calendar-action {
+	background-color: #f5f3ff;
+	border-radius: 6px;
+	padding: 4px;
+	cursor: pointer;
+}
+
+.calendar-action mat-icon {
+	color: #5a3fc0;
+}
+
+.schedule-tools {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.board-label .week-range {
+	font-size: 10px;
+	color: #8a8a8a;
+	font-weight: 400;
+	white-space: nowrap;
+}
+
+.week-picker-input {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+.empty-week-note {
+	width: 100%;
+	text-align: center;
+	padding: 20px 10px;
+	font-size: 11px;
+	color: #8a8a8a;
+}

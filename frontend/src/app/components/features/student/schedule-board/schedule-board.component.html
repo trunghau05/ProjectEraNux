@@ -1,0 +1,51 @@
+<div class="schedule board-item flex-col">
+  <div class="board-label flex-betw">
+    <span>Schedule Board</span>
+    <div class="schedule-tools">
+      <span class="week-range">{{ selectedWeekDisplay }}</span>
+      <div class="calendar-action flex-cen" title="Pick a date to filter by week" (click)="openWeekPicker(weekPickerStudent)">
+        <mat-icon>today</mat-icon>
+      </div>
+    </div>
+  </div>
+  <input
+    #weekPickerStudent
+    type="date"
+    class="week-picker-input"
+    [value]="selectedWeekDateValue"
+    (change)="onWeekDateChange($event)">
+  <div class="board mt-20">
+    <div class="schedule-table">
+      @if (sessionsByDate.length === 0) {
+        <p class="empty-week-note">No schedules in the selected week.</p>
+      } @else {
+        <div class="schedule-row" style="display: flex; gap: 20px;">
+          @for (day of sessionsByDate; track day.date) {
+            <div class="schedule-col flex-col" style="gap: 20px;">
+              <span>{{ day.displayDate }}</span>
+
+              @for (session of day.sessions; track session.id) {
+                <div class="schedule-item" [ngClass]="getSessionClass(session)" style="gap: 5px; width: 100%; border-radius: 10px; padding: 10px; box-sizing: border-box;">
+                  <span style="color: white; font-weight: 500; font-size: 12px; text-align: left;">
+                    {{ session.student.name }} - {{ session.teacher.name }}
+                  </span>
+                  <p style="color: #f0f0f0ff; font-size: 11px; margin: 0;">
+                    {{ session.start_at | date:'HH:mm' }} - {{ session.end_at | date:'HH:mm' }}
+                  </p>
+                  <button
+                    type="button"
+                    class="join-session-btn"
+                    [class.join-session-btn-disabled]="!isSessionJoinable(session) || isJoiningSession(session)"
+                    [disabled]="!isSessionJoinable(session) || isJoiningSession(session)"
+                    (click)="handleJoinSession(session)">
+                    {{ isJoiningSession(session) ? 'Joining...' : getSessionJoinButtonText(session) }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

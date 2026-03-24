@@ -1,0 +1,394 @@
+<div class="video-call-container">
+  <!-- Header -->
+  <div class="call-header">
+    <div class="logo flex-cen">
+      <div style="width:30px;height:30px;border-radius:8px;font-family:fantasy;background:linear-gradient(135deg,#6b46c1 0%,#9f7aea 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">EN</div>
+      <p>EraNux</p>
+    </div>
+    @if (callState?.isInCall) {
+      <div class="room-info">
+        <span>Room: <strong>{{ roomId }}</strong></span>
+        <span class="participants">{{ getParticipantCount() }} people</span>
+        <span class="call-duration">{{ callDurationDisplay }}</span>
+        @if (isRecording) {
+          <span class="recording-indicator">
+            <span class="recording-dot"></span>
+            <span>Rec: {{ recordingDurationDisplay }}</span>
+          </span>
+        }
+        @if (isUploadingRecording) {
+          <span class="recording-indicator uploading">
+            <span>Uploading video...</span>
+          </span>
+        }
+        @if (recordingUploadMessage && !isUploadingRecording) {
+          <span class="recording-indicator" [class.success]="recordingUploadStatus === 'success'" [class.error]="recordingUploadStatus === 'error'">
+            <span>{{ recordingUploadMessage }}</span>
+          </span>
+        }
+        @if (latestRecordingUrl) {
+          <button class="btn-header-action btn-play" (click)="openLatestRecording()" title="Play recording">
+            <mat-icon>play_circle</mat-icon>
+          </button>
+        }
+      </div>
+      <div class="header-actions">
+        <button
+        class="btn-header-action"
+        [class.recording]="isRecording"
+        (click)="toggleRecording()"
+        title="{{ isRecording ? 'Stop recording' : 'Record screen' }}"
+        >
+        <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
+        @if (isRecording) {
+          <span class="recording-pulse"></span>
+        }
+        </button>
+        <button
+          class="btn-header-action"
+          [class.active]="isChatOpen"
+          (click)="toggleChat()"
+          title="Chat"
+        >
+          <mat-icon>chat</mat-icon>
+          @if (hasUnreadMessages && !isChatOpen) {
+            <span class="unread-dot"></span>
+          }
+        </button>
+        <button class="btn-copy" (click)="copyRoomLink()">
+          <mat-icon>content_copy</mat-icon>
+          <span style="color: white;">Copy link</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Error message -->
+  @if (errorMessage) {
+    <div class="error-message">
+      <mat-icon>warning</mat-icon>
+      <span>{{ errorMessage }}</span>
+      <button (click)="errorMessage = ''">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Join form (before joining) - Split layout 50-50 -->
+  @if (!callState?.isInCall) {
+    <div class="pre-join-container">
+      <!-- Left side: Camera preview with controls -->
+      <div class="preview-section">
+        <div class="preview-video-wrapper">
+          <video
+            #previewVideo
+            autoplay
+            muted
+            playsinline
+            [class.video-disabled]="!isPreviewVideoEnabled"
+          ></video>
+          @if (!isPreviewVideoEnabled) {
+            <div class="video-overlay">
+              <mat-icon>videocam_off</mat-icon>
+              <span>Camera off</span>
+            </div>
+          }
+
+          <!-- User name label at top left -->
+          <div class="preview-user-name">
+            <span>{{ userName }}</span>
+          </div>
+
+          <!-- Preview controls inside video at bottom center -->
+          <div class="preview-controls">
+            <button
+              class="btn-preview-control"
+              [class.active]="isPreviewVideoEnabled"
+              (click)="togglePreviewVideo()"
+              title="Toggle camera"
+            >
+              <mat-icon>{{ isPreviewVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
+              <span>{{ isPreviewVideoEnabled ? 'Turn camera off' : 'Turn camera on' }}</span>
+            </button>
+
+            <button
+              class="btn-preview-control"
+              [class.active]="isPreviewAudioEnabled"
+              (click)="togglePreviewAudio()"
+              title="Toggle mic"
+            >
+              <mat-icon>{{ isPreviewAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
+              <span>{{ isPreviewAudioEnabled ? 'Mute mic' : 'Unmute mic' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Room form -->
+      <div class="room-form-section">
+        <h3>Join the video call</h3>
+
+        <div class="form-container">
+          <!-- User info display -->
+          <div class="user-info-display">
+            <div class="info-item">
+              <mat-icon class="info-icon">person</mat-icon>
+              <span class="label">Name:</span>
+              <span class="value">{{ userName }}</span>
+            </div>
+            <div class="info-item">
+              <mat-icon class="info-icon">badge</mat-icon>
+              <span class="label">ID:</span>
+              <span class="value">{{ userId }}</span>
+            </div>
+          </div>
+
+          <!-- Room ID input -->
+          <div class="form-group">
+            <label for="roomId">Room code</label>
+            <div class="input-with-button">
+              <input
+                id="roomId"
+                type="text"
+                [(ngModel)]="roomId"
+                placeholder="Enter a room code or create a new one"
+                class="field"
+              />
+              <button 
+                class="btn-generate" 
+                (click)="generateRoomId()"
+                title="Generate a new room code"
+              >
+                <mat-icon>casino</mat-icon>
+                <span>Generate</span>
+              </button>
+            </div>
+          </div>
+
+          <button
+            class="btn-join"
+            (click)="startCall()"
+            [disabled]="!roomId"
+          >
+            <mat-icon>video_call</mat-icon>
+            <span>Join</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Video area (during call) -->
+  @if (callState?.isInCall) {
+    <div class="video-area">
+      @if (getScreenSharingStream()) {
+        <!-- Layout with screen sharing: 70% screen + 30% participants -->
+        <div class="screen-share-layout">
+          <!-- Main screen share (70%) -->
+          <div class="screen-share-main">
+            <video
+              #screenVideo
+              autoplay
+              playsinline
+              [srcObject]="getScreenSharingStream()"
+            ></video>
+            <div class="screen-label">
+              <mat-icon>screen_share</mat-icon>
+              <span>Screen sharing</span>
+            </div>
+          </div>
+
+          <!-- Participants sidebar (30%) -->
+          <div class="participants-sidebar">
+            <div class="sidebar-header">
+              <mat-icon>people</mat-icon>
+              <span>Participants ({{ getParticipantCount() }})</span>
+            </div>
+            
+            <!-- All participants list (local + remote) -->
+            <div class="participants-list">
+              <!-- Local video -->
+              <div class="participant-video">
+                <video
+                  #localVideo
+                  autoplay
+                  muted
+                  playsinline
+                  [class.video-disabled]="!callState?.isVideoEnabled"
+                ></video>
+                @if (!callState?.isVideoEnabled) {
+                  <div class="video-overlay">
+                    <mat-icon>videocam_off</mat-icon>
+                  </div>
+                }
+                <span class="participant-name">
+                  You
+                </span>
+                @if (!callState?.isAudioEnabled) {
+                  <div class="mic-status">
+                    <mat-icon>mic_off</mat-icon>
+                  </div>
+                }
+              </div>
+
+              <!-- Remote participants container -->
+              <div #remoteVideosContainer class="remote-participants-container"></div>
+              
+              @if ((callState?.peers?.size ?? 0) === 0) {
+                <div class="no-peers-small">
+                  <mat-icon>hourglass_empty</mat-icon>
+                  <p>Waiting for others...</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- Normal layout without screen sharing -->
+        <div class="normal-layout">
+          <!-- Remote videos grid -->
+          <div 
+            class="remote-videos" 
+            [class.one-on-one]="(callState?.peers?.size ?? 0) === 1"
+            #remoteVideosContainer
+          >
+            @if ((callState?.peers?.size ?? 0) === 0) {
+              <div class="no-peers">
+                <p>Waiting for others to join...</p>
+              </div>
+            }
+          </div>
+
+          <!-- Local video (picture-in-picture) -->
+          <div class="local-video-container">
+            <video
+              #localVideo
+              autoplay
+              muted
+              playsinline
+              [class.video-disabled]="!callState?.isVideoEnabled"
+            ></video>
+            @if (!callState?.isVideoEnabled) {
+              <div class="video-overlay">
+                <mat-icon>videocam_off</mat-icon>
+                <span>Camera off</span>
+              </div>
+            }
+            <div class="user-name-label">
+              <span>{{ userName }}</span>
+            </div>
+            @if (!callState?.isAudioEnabled) {
+              <div class="mic-status">
+                <mat-icon>mic_off</mat-icon>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Controls -->
+      <div class="call-controls">
+        <button
+          class="btn-control"
+          [class.active]="callState?.isVideoEnabled"
+          (click)="toggleVideo()"
+          title="Toggle camera"
+        >
+          <mat-icon>{{ callState?.isVideoEnabled ? 'videocam' : 'videocam_off' }}</mat-icon>
+        </button>
+
+        <button
+          class="btn-control"
+          [class.active]="callState?.isAudioEnabled"
+          (click)="toggleAudio()"
+          title="Toggle mic"
+        >
+          <mat-icon>{{ callState?.isAudioEnabled ? 'mic' : 'mic_off' }}</mat-icon>
+        </button>
+
+        <button
+          class="btn-control"
+          [class.active]="callState?.isScreenSharing"
+          (click)="toggleScreenShare()"
+          title="Share screen"
+        >
+          <mat-icon>{{ callState?.isScreenSharing ? 'stop_screen_share' : 'screen_share' }}</mat-icon>
+        </button>
+
+        <button
+          class="btn-control btn-end"
+          (click)="endCall()"
+          title="End call"
+        >
+          <mat-icon>call_end</mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Chat Sidebar -->
+  <div class="chat-sidebar" [class.open]="isChatOpen">
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="chat-header-title">
+        <mat-icon>chat</mat-icon>
+        <h3>Messages</h3>
+      </div>
+      <button class="btn-close-chat" (click)="closeChat()" title="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="chat-messages">
+      @if (chatMessages.length === 0) {
+        <div class="chat-empty">
+          <mat-icon>chat_bubble_outline</mat-icon>
+          <p>No messages yet</p>
+          <span>Send your first message!</span>
+        </div>
+      } @else {
+        @for (msg of chatMessages; track msg.id) {
+          <div class="chat-message" [class.own]="msg.isOwn">
+            <div class="message-avatar">
+              <span>{{ msg.userName.charAt(0).toUpperCase() }}</span>
+            </div>
+            <div class="message-content">
+              <div class="message-header">
+                <span class="message-name">{{ msg.userName }}</span>
+                <span class="message-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
+              </div>
+              <div class="message-text">{{ msg.message }}</div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Chat Input -->
+    <div class="chat-input">
+      <textarea
+        #chatTextarea
+        [(ngModel)]="newMessage"
+        (input)="onChatInput($event)"
+        (keydown)="onChatKeydown($event)"
+        placeholder="Type a message..."
+        rows="1"
+        maxlength="500"
+      ></textarea>
+      <button
+        class="btn-send"
+        [disabled]="!newMessage.trim()"
+        (click)="sendMessage()"
+        title="Send"
+      >
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Chat Overlay (backdrop) -->
+  @if (isChatOpen) {
+    <div class="chat-overlay" (click)="closeChat()"></div>
+  }
+</div>

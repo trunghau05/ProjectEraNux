@@ -1,0 +1,52 @@
+.list {
+	height: 320px;
+}
+
+.board-item {
+	padding: 20px;
+	background-color: white;
+	border-radius: 10px;
+	height: 305px;
+}
+
+.board {
+	overflow: auto;
+	scrollbar-width: none;
+}
+
+.board-label span {
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.board-label mat-icon {
+	height: 15px;
+	width: 15px;
+	font-size: 15px;
+}
+
+.class-item {
+	padding: 20px 0;
+	border-bottom: 1px solid #f1f1f1;
+}
+
+.class-item span {
+	font-size: 11px;
+	font-weight: 500;
+}
+
+.class-item p {
+	font-size: 11px;
+	color: #acacacff;
+}
+
+.class-item:last-child {
+	border: none;
+	padding-bottom: 0;
+}
+
+mat-progress-bar {
+	background-color: #e9e9e9ff;
+	color: #bb295fff;
+	border-radius: 5px;
+}
