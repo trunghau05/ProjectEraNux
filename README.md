@@ -33,4 +33,8 @@ python manage.py spectacular --file openapi.json
 python manage.py runserver
 openapi-generator-cli generate -i http://localhost:8000/api/schema/ -g typescript-angular -o src/app/apis --additional-properties=providedInRoot=true
 npm run start
-
+---
+STT
+.\.venv\Scripts\Activate.ps1
+cd stt_server
+python -m uvicorn app:app --host 0.0.0.0 --port 8001
