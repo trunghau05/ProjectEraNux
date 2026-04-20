@@ -18,4 +18,6 @@ export * from './subjects.service';
 import { SubjectsService } from './subjects.service';
 export * from './teachers.service';
 import { TeachersService } from './teachers.service';
-export const APIS = [BookingsService, ClassesService, LoginService, MediaService, RoomsService, SchedulesService, SessionsService, StudentsService, SubjectsService, TeachersService];
+export * from './timeSlots.service';
+import { TimeSlotsService } from './timeSlots.service';
+export const APIS = [BookingsService, ClassesService, LoginService, MediaService, RoomsService, SchedulesService, SessionsService, StudentsService, SubjectsService, TeachersService, TimeSlotsService];

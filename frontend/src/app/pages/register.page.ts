@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { StudentsService, TeachersService } from '../apis';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   standalone: true,
@@ -115,6 +116,7 @@ export class Register {
   private teacherService = inject(TeachersService);
   private studentService = inject(StudentsService);
   private router = inject(Router);
+  private toastService = inject(ToastService);
 
   fullName = '';
   email = '';
@@ -133,24 +135,24 @@ export class Register {
 
   onSubmit() {
     if (!this.fullName || !this.email || !this.password || !this.confirmPassword || !this.role) {
-      alert('Please fill all required fields and select a role');
+      this.toastService.warning('Please fill all required fields and select a role');
       return;
     }
     if (this.password !== this.confirmPassword) {
-      alert('Passwords do not match');
+      this.toastService.warning('Passwords do not match');
       return;
     }
 
     if (this.role === 'student') {
       if (!this.birth || !this.level || !this.phone) {
-        alert('Please provide birth date, level and phone for students');
+        this.toastService.warning('Please provide birth date, level and phone for students');
         return;
       }
     }
 
     if (this.role === 'teacher' || this.role === 'tutor') {
       if (!this.bio || !this.birth || !this.phone) {
-        alert('Please provide a short bio, birth date and phone for teachers/tutors');
+        this.toastService.warning('Please provide a short bio, birth date and phone for teachers/tutors');
         return;
       }
     }
@@ -179,24 +181,24 @@ export class Register {
       this.studentService.studentsCreate(payload).subscribe({
         next: (res) => {
           this.isLoading = false;
-          alert('Registration successful! Please log in.');
+          this.toastService.success('Registration successful! Please log in.');
           this.router.navigate(['/login']);
         },
         error: (err) => {
           this.isLoading = false;
-          alert('Registration failed: ' + err.message);
+          this.toastService.error('Registration failed: ' + err.message);
         }
       })
     } else {
       this.teacherService.teachersCreate(payload).subscribe({
         next: (res) => {
           this.isLoading = false;
-          alert('Registration successful! Please log in.');
+          this.toastService.success('Registration successful! Please log in.');
           this.router.navigate(['/login']);
         },
         error: (err) => {
           this.isLoading = false;
-          alert('Registration failed: ' + err.message);
+          this.toastService.error('Registration failed: ' + err.message);
         }
       });
     }

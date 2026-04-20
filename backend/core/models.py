@@ -195,10 +195,28 @@ class Booking(TimeStampedModel):
 class Schedule(TimeStampedModel):
     ACTIVE = 'active'
     INACTIVE = 'inactive'
+
+    MONDAY = 0
+    TUESDAY = 1
+    WEDNESDAY = 2
+    THURSDAY = 3
+    FRIDAY = 4
+    SATURDAY = 5
+    SUNDAY = 6
   
     STATUS_CHOICES = [
         (ACTIVE, 'Active'),
         (INACTIVE, 'Inactive'),
+    ]
+
+    DAY_OF_WEEK_CHOICES = [
+        (MONDAY, 'Monday'),
+        (TUESDAY, 'Tuesday'),
+        (WEDNESDAY, 'Wednesday'),
+        (THURSDAY, 'Thursday'),
+        (FRIDAY, 'Friday'),
+        (SATURDAY, 'Saturday'),
+        (SUNDAY, 'Sunday'),
     ]
 
     class_obj = models.ForeignKey(
@@ -207,7 +225,9 @@ class Schedule(TimeStampedModel):
         db_column='class_id'
     )
 
-    day_of_week = models.PositiveSmallIntegerField()
+    day_of_week = models.PositiveSmallIntegerField(choices=DAY_OF_WEEK_CHOICES)
+    start_date = models.DateField()
+    repeat = models.PositiveIntegerField(default=1)
     start_time = models.TimeField()
     end_time = models.TimeField()
 

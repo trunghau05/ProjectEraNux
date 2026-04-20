@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -10,14 +10,21 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class Search {
   @Input() placeholder: string = '';
+  @Output() searchChange = new EventEmitter<string>();
+
   searchValue = '';
 
   onSearch() {
-    // Implement search logic here
-    console.log('Searching for:', this.searchValue);
+    this.searchChange.emit(this.searchValue.trim());
+  }
+
+  onSearchValueChange(value: string) {
+    this.searchValue = value;
+    this.searchChange.emit(this.searchValue.trim());
   }
 
   clearSearch() {
     this.searchValue = '';
+    this.searchChange.emit('');
   }
 }

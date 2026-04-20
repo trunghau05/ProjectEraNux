@@ -163,19 +163,43 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/classes/:
-    get:
-      operationId: classes_list
-      description: |-
-        Class API:
-        - GET /classes/
-        - GET /classes/{id}/
-        - GET /classes/?student_id=
-        - GET /classes/?teacher_id=
-        - GET /classes/by-student/{student_id}/
-        - GET /classes/by-teacher/{teacher_id}/
+  /api/bookings/{id}/confirm/:
+    post:
+      operationId: bookings_confirm_create
+      description: Confirm a pending booking and mark its time slot as booked.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this booking.
+        required: true
       tags:
-      - classes
+      - bookings
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDetail'
+          description: ''
+  /api/bookings/tutor/{tutor_id}/students/:
+    get:
+      operationId: bookings_tutor_students_list
+      description: Get students who booked a tutor with their booked time slots.
+      parameters:
+      - in: path
+        name: tutor_id
+        schema:
+          type: integer
+        description: Tutor ID used to retrieve students who booked this tutor.
+        required: true
+      tags:
+      - bookings
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -187,7 +211,44 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ClassDetail'
+                  $ref: '#/components/schemas/TutorBookedStudent'
+          description: ''
+  /api/classes/:
+    get:
+      operationId: classes_list
+      description: |-
+        Class API:
+        - GET /classes/
+        - GET /classes/{id}/
+        - GET /classes/?student_id=
+        - GET /classes/?teacher_id=
+        - GET /classes/by-student/{student_id}/
+        - GET /classes/by-teacher/{teacher_id}/
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - classes
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClassDetailList'
           description: ''
     post:
       operationId: classes_create
@@ -364,6 +425,43 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/classes/{id}/register-student/:
+    post:
+      operationId: classes_register_student_create
+      description: Register a student into a class, update class status, and generate
+        sessions from schedules.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this class.
+        required: true
+      tags:
+      - classes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClassRegistration'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ClassRegistration'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ClassRegistration'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClassRegistrationResponse'
+          description: ''
   /api/classes/by-student/{student_id}/:
     get:
       operationId: classes_by_student_list
@@ -376,6 +474,18 @@ paths:
         - GET /classes/by-student/{student_id}/
         - GET /classes/by-teacher/{teacher_id}/
       parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: path
         name: student_id
         schema:
@@ -393,9 +503,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ClassDetail'
+                $ref: '#/components/schemas/PaginatedClassDetailList'
           description: ''
   /api/classes/by-teacher/{teacher_id}/:
     get:
@@ -409,6 +517,18 @@ paths:
         - GET /classes/by-student/{student_id}/
         - GET /classes/by-teacher/{teacher_id}/
       parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: path
         name: teacher_id
         schema:
@@ -426,9 +546,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ClassDetail'
+                $ref: '#/components/schemas/PaginatedClassDetailList'
           description: ''
   /api/login/:
     post:
@@ -1027,12 +1145,15 @@ paths:
   /api/sessions/by-student/{student_id}/:
     get:
       operationId: sessions_by_student_list
-      description: Get all sessions of a specific student
+      description: Get all sessions for a student, including tutor sessions and class
+        sessions from enrolled classes.
       parameters:
       - in: path
         name: student_id
         schema:
           type: integer
+        description: Student ID. Returns tutor sessions by student_id and teacher
+          class sessions via in_class.
         required: true
       tags:
       - sessions
@@ -1052,12 +1173,42 @@ paths:
   /api/sessions/by-teacher/{teacher_id}/:
     get:
       operationId: sessions_by_teacher_list
-      description: Get all sessions of a specific teacher
+      description: Get all class sessions for a teacher. Sessions must belong to classes
+        owned by this teacher.
       parameters:
       - in: path
         name: teacher_id
         schema:
           type: integer
+        description: Teacher ID. Returns only class-based sessions owned by this teacher.
+        required: true
+      tags:
+      - sessions
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionDetail'
+          description: ''
+  /api/sessions/by-tutor/{tutor_id}/:
+    get:
+      operationId: sessions_by_tutor_list
+      description: Get all tutor sessions. Sessions must be linked to time slots owned
+        by this tutor.
+      parameters:
+      - in: path
+        name: tutor_id
+        schema:
+          type: integer
+        description: Tutor ID. Returns only time-slot-based sessions owned by this
+          tutor.
         required: true
       tags:
       - sessions
@@ -1702,8 +1853,278 @@ paths:
                 items:
                   $ref: '#/components/schemas/Teacher'
           description: ''
+  /api/time-slots/:
+    get:
+      operationId: time_slots_list
+      description: Time slot API with filters by teacher and availability.
+      tags:
+      - time-slots
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSlotDetail'
+          description: ''
+    post:
+      operationId: time_slots_create
+      description: Time slot API with filters by teacher and availability.
+      tags:
+      - time-slots
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSlot'
+          description: ''
+  /api/time-slots/{id}/:
+    get:
+      operationId: time_slots_retrieve
+      description: Time slot API with filters by teacher and availability.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this time slot.
+        required: true
+      tags:
+      - time-slots
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSlotDetail'
+          description: ''
+    put:
+      operationId: time_slots_update
+      description: Time slot API with filters by teacher and availability.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this time slot.
+        required: true
+      tags:
+      - time-slots
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSlot'
+          description: ''
+    patch:
+      operationId: time_slots_partial_update
+      description: Time slot API with filters by teacher and availability.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this time slot.
+        required: true
+      tags:
+      - time-slots
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTimeSlot'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTimeSlot'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTimeSlot'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSlot'
+          description: ''
+    delete:
+      operationId: time_slots_destroy
+      description: Time slot API with filters by teacher and availability.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this time slot.
+        required: true
+      tags:
+      - time-slots
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/time-slots/{id}/mark-booked/:
+    post:
+      operationId: time_slots_mark_booked_create
+      description: Mark a time slot as booked when a confirmed booking exists for
+        it.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this time slot.
+        required: true
+      tags:
+      - time-slots
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeSlotDetail'
+          description: ''
+  /api/time-slots/teacher/{teacher_id}/:
+    get:
+      operationId: time_slots_teacher_list
+      description: Get all time slots of a teacher.
+      parameters:
+      - in: path
+        name: teacher_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - time-slots
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSlotDetail'
+          description: ''
+  /api/time-slots/teacher/{teacher_id}/available/:
+    get:
+      operationId: time_slots_teacher_available_list
+      description: Get available time slots of a teacher.
+      parameters:
+      - in: path
+        name: teacher_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - time-slots
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSlotDetail'
+          description: ''
 components:
   schemas:
+    BookedTimeSlot:
+      type: object
+      properties:
+        booking_id:
+          type: integer
+        id:
+          type: integer
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+        booking_status:
+          type: string
+      required:
+      - booking_id
+      - booking_status
+      - end_at
+      - id
+      - start_at
+      - status
     Booking:
       type: object
       properties:
@@ -1813,6 +2234,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/Teacher'
           readOnly: true
+        enrolled_students:
+          type: integer
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -1831,9 +2255,41 @@ components:
           $ref: '#/components/schemas/ClassStatusEnum'
       required:
       - created_at
+      - enrolled_students
       - id
       - subject
       - teacher
+    ClassRegistration:
+      type: object
+      properties:
+        student_id:
+          type: integer
+      required:
+      - student_id
+    ClassRegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        class_status:
+          type: string
+        enrolled_students:
+          type: integer
+        created_session_ids:
+          type: array
+          items:
+            type: integer
+        reused_session_ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - class_status
+      - enrolled_students
+      - message
+      - success
     ClassStatusEnum:
       enum:
       - open
@@ -1846,6 +2302,24 @@ components:
         * `closed` - Closed
         * `complete` - Complete
         * `full` - Full
+    DayOfWeekEnum:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      type: integer
+      description: |-
+        * `0` - Monday
+        * `1` - Tuesday
+        * `2` - Wednesday
+        * `3` - Thursday
+        * `4` - Friday
+        * `5` - Saturday
+        * `6` - Sunday
     Login:
       type: object
       properties:
@@ -1858,6 +2332,29 @@ components:
       required:
       - email
       - password
+    PaginatedClassDetailList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassDetail'
     PatchedBooking:
       type: object
       properties:
@@ -1928,9 +2425,18 @@ components:
           format: date-time
           readOnly: true
         day_of_week:
-          type: integer
-          maximum: 65535
+          allOf:
+          - $ref: '#/components/schemas/DayOfWeekEnum'
           minimum: 0
+          maximum: 65535
+        start_date:
+          type: string
+          format: date
+        repeat:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
         start_time:
           type: string
           format: time
@@ -2060,6 +2566,26 @@ components:
           format: decimal
           pattern: ^-?\d{0,1}(?:\.\d{0,2})?$
           nullable: true
+    PatchedTimeSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/TimeSlotStatusEnum'
+        teacher:
+          type: integer
     Room:
       type: object
       properties:
@@ -2113,9 +2639,18 @@ components:
           format: date-time
           readOnly: true
         day_of_week:
-          type: integer
-          maximum: 65535
+          allOf:
+          - $ref: '#/components/schemas/DayOfWeekEnum'
           minimum: 0
+          maximum: 65535
+        start_date:
+          type: string
+          format: date
+        repeat:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
         start_time:
           type: string
           format: time
@@ -2132,6 +2667,7 @@ components:
       - day_of_week
       - end_time
       - id
+      - start_date
       - start_time
     ScheduleDetail:
       type: object
@@ -2148,9 +2684,18 @@ components:
           format: date-time
           readOnly: true
         day_of_week:
-          type: integer
-          maximum: 65535
+          allOf:
+          - $ref: '#/components/schemas/DayOfWeekEnum'
           minimum: 0
+          maximum: 65535
+        start_date:
+          type: string
+          format: date
+        repeat:
+          type: integer
+          maximum: 4294967295
+          minimum: 0
+          format: int64
         start_time:
           type: string
           format: time
@@ -2165,6 +2710,7 @@ components:
       - day_of_week
       - end_time
       - id
+      - start_date
       - start_time
     ScheduleStatusEnum:
       enum:
@@ -2228,7 +2774,7 @@ components:
           readOnly: true
         class_obj:
           allOf:
-          - $ref: '#/components/schemas/Class'
+          - $ref: '#/components/schemas/ClassDetail'
           readOnly: true
         teacher:
           allOf:
@@ -2416,6 +2962,34 @@ components:
       - id
       - start_at
       - teacher
+    TimeSlotDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        teacher:
+          allOf:
+          - $ref: '#/components/schemas/Teacher'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        start_at:
+          type: string
+          format: date-time
+        end_at:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/TimeSlotStatusEnum'
+      required:
+      - created_at
+      - end_at
+      - id
+      - start_at
+      - teacher
     TimeSlotStatusEnum:
       enum:
       - available
@@ -2424,6 +2998,20 @@ components:
       description: |-
         * `available` - Available
         * `booked` - Booked
+    TutorBookedStudent:
+      type: object
+      properties:
+        student:
+          allOf:
+          - $ref: '#/components/schemas/Student'
+          readOnly: true
+        time_slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookedTimeSlot'
+      required:
+      - student
+      - time_slots
     UploadRecordingRequest:
       type: object
       properties:

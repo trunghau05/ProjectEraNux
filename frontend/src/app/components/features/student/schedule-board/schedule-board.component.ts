@@ -110,6 +110,20 @@ export class StudentScheduleBoardComponent implements OnChanges {
     return 'Join - Finished';
   }
 
+  getSessionHeadline(session: SessionDetail): string {
+    const studentName = (session as SessionDetail & { student?: { name?: string } | null }).student?.name;
+    const teacherName = (session as SessionDetail & { teacher?: { name?: string } | null }).teacher?.name;
+    const classSubjectName = (session as SessionDetail & {
+      class_obj?: { subject?: { name?: string } | null; id?: number } | null;
+    }).class_obj?.subject?.name;
+    const classId = (session as SessionDetail & { class_obj?: { id?: number } | null }).class_obj?.id;
+
+    const leftLabel = studentName || classSubjectName || (classId ? `Class #${classId}` : 'Private session');
+    const rightLabel = teacherName || 'Unknown teacher';
+
+    return `${leftLabel} - ${rightLabel}`;
+  }
+
   private updateSelectedWeekByDateValue(dateValue: string): void {
     if (!dateValue) {
       return;

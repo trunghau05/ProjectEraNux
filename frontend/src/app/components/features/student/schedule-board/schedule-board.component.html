@@ -27,7 +27,7 @@
               @for (session of day.sessions; track session.id) {
                 <div class="schedule-item" [ngClass]="getSessionClass(session)" style="gap: 5px; width: 100%; border-radius: 10px; padding: 10px; box-sizing: border-box;">
                   <span style="color: white; font-weight: 500; font-size: 12px; text-align: left;">
-                    {{ session.student.name }} - {{ session.teacher.name }}
+                    {{ getSessionHeadline(session) }}
                   </span>
                   <p style="color: #f0f0f0ff; font-size: 11px; margin: 0;">
                     {{ session.start_at | date:'HH:mm' }} - {{ session.end_at | date:'HH:mm' }}

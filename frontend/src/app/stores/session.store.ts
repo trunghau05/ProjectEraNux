@@ -29,6 +29,7 @@ export class SessionListStore {
     if (currentUser.role === 'student') {
       this.sessionService.sessionsByStudentList(currentUser.id).subscribe({
         next: (res) => {
+          console.log('Student sessions:', res);
           this.sessions.set(res);
           this.isLoading.set(false);
         },
@@ -40,14 +41,30 @@ export class SessionListStore {
       return;
     }
 
-    if (currentUser.role === 'teacher' || currentUser.role === 'tutor') {
+    if (currentUser.role === 'teacher') {
       this.sessionService.sessionsByTeacherList(currentUser.id).subscribe({
         next: (res) => {
+          console.log('Teacher sessions:', res);
           this.sessions.set(res);
           this.isLoading.set(false);
         },
         error: (err) => {
           this.errorMessage.set('Failed to get session list by teacher: ' + err.message);
+          this.isLoading.set(false);
+        },
+      });
+      return;
+    }
+
+    if (currentUser.role === 'tutor') {
+      this.sessionService.sessionsByTutorList(currentUser.id).subscribe({
+        next: (res) => {
+          console.log('Tutor sessions:', res);
+          this.sessions.set(res);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.errorMessage.set('Failed to get session list by tutor: ' + err.message);
           this.isLoading.set(false);
         },
       });

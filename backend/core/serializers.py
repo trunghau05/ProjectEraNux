@@ -66,6 +66,7 @@ class ClassSerializer(serializers.ModelSerializer):
 class ClassDetailSerializer(serializers.ModelSerializer):
     subject = SubjectSerializer(read_only=True)
     teacher = TeacherSerializer(read_only=True)
+    enrolled_students = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Class
@@ -88,6 +89,25 @@ class InClassDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = InClass
         fields = '__all__'
+
+
+class ClassRegistrationSerializer(serializers.Serializer):
+    student_id = serializers.IntegerField()
+
+
+class ClassRegistrationResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    message = serializers.CharField()
+    class_status = serializers.CharField()
+    enrolled_students = serializers.IntegerField()
+    created_session_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False
+    )
+    reused_session_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False
+    )
 
 
 # =========================
@@ -115,6 +135,15 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         fields = '__all__'
 
+    def validate(self, attrs):
+        teacher = attrs.get('teacher', getattr(self.instance, 'teacher', None))
+        time_slot = attrs.get('time_slot', getattr(self.instance, 'time_slot', None))
+
+        if teacher and time_slot and time_slot.teacher_id != teacher.id:
+            raise serializers.ValidationError({'teacher': 'Teacher must match the selected time slot owner.'})
+
+        return attrs
+
 
 class BookingDetailSerializer(serializers.ModelSerializer):
     student = StudentSerializer(read_only=True)
@@ -126,6 +155,20 @@ class BookingDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class BookedTimeSlotSerializer(serializers.Serializer):
+    booking_id = serializers.IntegerField()
+    id = serializers.IntegerField()
+    start_at = serializers.DateTimeField()
+    end_at = serializers.DateTimeField()
+    status = serializers.CharField()
+    booking_status = serializers.CharField()
+
+
+class TutorBookedStudentSerializer(serializers.Serializer):
+    student = StudentSerializer(read_only=True)
+    time_slots = BookedTimeSlotSerializer(many=True)
+
+
 # =========================
 # SCHEDULE
 # =========================
@@ -133,6 +176,27 @@ class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Schedule
         fields = '__all__'
+
+    def validate(self, attrs):
+        day_of_week = attrs.get('day_of_week', getattr(self.instance, 'day_of_week', None))
+        repeat = attrs.get('repeat', getattr(self.instance, 'repeat', 1))
+        start_time = attrs.get('start_time', getattr(self.instance, 'start_time', None))
+        end_time = attrs.get('end_time', getattr(self.instance, 'end_time', None))
+        start_date = attrs.get('start_date', getattr(self.instance, 'start_date', None))
+
+        if day_of_week is None or day_of_week < 0 or day_of_week > 6:
+            raise serializers.ValidationError({'day_of_week': 'day_of_week must be in range 0..6 (0=Monday).'})
+
+        if not start_date:
+            raise serializers.ValidationError({'start_date': 'start_date is required.'})
+
+        if repeat is None or repeat < 1:
+            raise serializers.ValidationError({'repeat': 'repeat must be greater than or equal to 1.'})
+
+        if start_time and end_time and end_time <= start_time:
+            raise serializers.ValidationError({'end_time': 'end_time must be after start_time.'})
+
+        return attrs
 
 
 class ScheduleDetailSerializer(serializers.ModelSerializer):
@@ -151,9 +215,25 @@ class SessionSerializer(serializers.ModelSerializer):
         model = Session
         fields = '__all__'
 
+    def validate(self, attrs):
+        class_obj = attrs.get('class_obj', getattr(self.instance, 'class_obj', None))
+        time_slot = attrs.get('time_slot', getattr(self.instance, 'time_slot', None))
+        student = attrs.get('student', getattr(self.instance, 'student', None))
+
+        if class_obj is not None:
+            if student is not None:
+                raise serializers.ValidationError({'student': 'Class-based session must not store student.'})
+            if time_slot is not None:
+                raise serializers.ValidationError({'time_slot': 'Class-based session must not store time_slot.'})
+        else:
+            if time_slot is not None and student is None:
+                raise serializers.ValidationError({'student': 'Booking session with time_slot must include student.'})
+
+        return attrs
+
 
 class SessionDetailSerializer(serializers.ModelSerializer):
-    class_obj = ClassSerializer(read_only=True)
+    class_obj = ClassDetailSerializer(read_only=True)
     teacher = TeacherSerializer(read_only=True)
     time_slot = TimeSlotSerializer(read_only=True)
     student = StudentSerializer(read_only=True)

@@ -2,10 +2,11 @@ import { Component, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Navbar } from './components/shared/navbar/navbar.component';
 import { CommonModule } from '@angular/common';
+import { ToastComponent } from './components/shared/toast/toast.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, CommonModule],
+  imports: [RouterOutlet, Navbar, CommonModule, ToastComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

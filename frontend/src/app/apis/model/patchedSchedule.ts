@@ -7,13 +7,16 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { DayOfWeekEnum } from './dayOfWeekEnum';
 import { ScheduleStatusEnum } from './scheduleStatusEnum';
 
 
 export interface PatchedSchedule { 
     readonly id?: number;
     readonly created_at?: string;
-    day_of_week?: number;
+    day_of_week?: DayOfWeekEnum;
+    start_date?: string;
+    repeat?: number;
     start_time?: string;
     end_time?: string;
     status?: ScheduleStatusEnum;

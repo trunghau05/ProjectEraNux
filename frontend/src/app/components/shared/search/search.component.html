@@ -5,6 +5,7 @@
   <input
     type="text"
     [(ngModel)]="searchValue"
+    (ngModelChange)="onSearchValueChange($event)"
     [placeholder]="placeholder"
     (keyup.enter)="onSearch()"
     class="search-input"

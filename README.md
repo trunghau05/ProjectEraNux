@@ -29,7 +29,8 @@ npm run start
 ng build
 ng serve
 ---
-python manage.py runserver
 python manage.py spectacular --file openapi.json
+python manage.py runserver
 openapi-generator-cli generate -i http://localhost:8000/api/schema/ -g typescript-angular -o src/app/apis --additional-properties=providedInRoot=true
+npm run start
 

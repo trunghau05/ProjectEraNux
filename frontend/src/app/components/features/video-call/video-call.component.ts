@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { WebrtcService, CallState } from '../../../services/webrtc.service';
 import { UserService } from '../../../services/user.service';
+import { ToastService } from '../../../services/toast.service';
 import { StudentsService, TeachersService } from '../../../apis';
 import { Subject, takeUntil, interval } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -56,6 +57,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   private previousScreenSharingState = false;
   private containerCheckScheduled = false;
   private userService = inject(UserService);
+  private toastService = inject(ToastService);
   private studentService = inject(StudentsService);
   private teacherService = inject(TeachersService);
   private visibilityHandler: (() => void) | null = null;
@@ -724,7 +726,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   copyRoomLink(): void {
     const link = `${window.location.origin}/video-call/${this.roomId}`;
     navigator.clipboard.writeText(link).then(() => {
-      alert('Room link copied!');
+      this.toastService.success('Room link copied!');
     });
   }
 

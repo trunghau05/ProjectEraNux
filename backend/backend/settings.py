@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     'subjects',
     'classes',
     'bookings',
+    'time_slots',
     'schedules',
     'class_sessions',
     'rooms',

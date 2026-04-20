@@ -9,14 +9,14 @@
  */
 import { SessionStatusEnum } from './sessionStatusEnum';
 import { Teacher } from './teacher';
-import { Class } from './class';
 import { Student } from './student';
 import { TimeSlot } from './timeSlot';
+import { ClassDetail } from './classDetail';
 
 
 export interface SessionDetail { 
     readonly id: number;
-    readonly class_obj: Class;
+    readonly class_obj: ClassDetail;
     readonly teacher: Teacher;
     readonly time_slot: TimeSlot;
     readonly student: Student;

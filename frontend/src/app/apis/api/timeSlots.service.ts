@@ -17,17 +17,11 @@ import { Observable }                                        from 'rxjs';
 import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
 
 // @ts-ignore
-import { Class } from '../model/class';
+import { PatchedTimeSlot } from '../model/patchedTimeSlot';
 // @ts-ignore
-import { ClassDetail } from '../model/classDetail';
+import { TimeSlot } from '../model/timeSlot';
 // @ts-ignore
-import { ClassRegistration } from '../model/classRegistration';
-// @ts-ignore
-import { ClassRegistrationResponse } from '../model/classRegistrationResponse';
-// @ts-ignore
-import { PaginatedClassDetailList } from '../model/paginatedClassDetailList';
-// @ts-ignore
-import { PatchedClass } from '../model/patchedClass';
+import { TimeSlotDetail } from '../model/timeSlotDetail';
 
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS }                     from '../variables';
@@ -39,194 +33,26 @@ import { BaseService } from '../api.base.service';
 @Injectable({
   providedIn: 'root'
 })
-export class ClassesService extends BaseService {
+export class TimeSlotsService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
     }
 
     /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint get /api/classes/by-student/{student_id}/
-     * @param studentId ID của student (từ bảng in_class)
-     * @param page A page number within the paginated result set.
-     * @param pageSize Number of results to return per page.
+     * Time slot API with filters by teacher and availability.
+     * @endpoint post /api/time-slots/
+     * @param timeSlot 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesByStudentList(studentId: number, page?: number, pageSize?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PaginatedClassDetailList>;
-    public classesByStudentList(studentId: number, page?: number, pageSize?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PaginatedClassDetailList>>;
-    public classesByStudentList(studentId: number, page?: number, pageSize?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PaginatedClassDetailList>>;
-    public classesByStudentList(studentId: number, page?: number, pageSize?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (studentId === null || studentId === undefined) {
-            throw new Error('Required parameter studentId was null or undefined when calling classesByStudentList.');
-        }
-
-        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'page',
-            <any>page,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'page_size',
-            <any>pageSize,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (basicAuth) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
-
-        // authentication (cookieAuth) required
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/classes/by-student/${this.configuration.encodeParam({name: "studentId", value: studentId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<PaginatedClassDetailList>('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                params: localVarQueryParameters.toHttpParams(),
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint get /api/classes/by-teacher/{teacher_id}/
-     * @param teacherId ID của teacher
-     * @param page A page number within the paginated result set.
-     * @param pageSize Number of results to return per page.
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public classesByTeacherList(teacherId: number, page?: number, pageSize?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PaginatedClassDetailList>;
-    public classesByTeacherList(teacherId: number, page?: number, pageSize?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PaginatedClassDetailList>>;
-    public classesByTeacherList(teacherId: number, page?: number, pageSize?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PaginatedClassDetailList>>;
-    public classesByTeacherList(teacherId: number, page?: number, pageSize?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (teacherId === null || teacherId === undefined) {
-            throw new Error('Required parameter teacherId was null or undefined when calling classesByTeacherList.');
-        }
-
-        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'page',
-            <any>page,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'page_size',
-            <any>pageSize,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        let localVarHeaders = this.defaultHeaders;
-
-        // authentication (basicAuth) required
-        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
-
-        // authentication (cookieAuth) required
-
-        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
-        ]);
-        if (localVarHttpHeaderAcceptSelected !== undefined) {
-            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
-        }
-
-        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
-
-        const localVarTransferCache: boolean = options?.transferCache ?? true;
-
-
-        let responseType_: 'text' | 'json' | 'blob' = 'json';
-        if (localVarHttpHeaderAcceptSelected) {
-            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
-                responseType_ = 'text';
-            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
-                responseType_ = 'json';
-            } else {
-                responseType_ = 'blob';
-            }
-        }
-
-        let localVarPath = `/api/classes/by-teacher/${this.configuration.encodeParam({name: "teacherId", value: teacherId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
-        const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<PaginatedClassDetailList>('get', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                params: localVarQueryParameters.toHttpParams(),
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
-                reportProgress: reportProgress
-            }
-        );
-    }
-
-    /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint post /api/classes/
-     * @param _class 
-     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
-     * @param reportProgress flag to report request and response progress.
-     * @param options additional options
-     */
-    public classesCreate(_class: Class, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Class>;
-    public classesCreate(_class: Class, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Class>>;
-    public classesCreate(_class: Class, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Class>>;
-    public classesCreate(_class: Class, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (_class === null || _class === undefined) {
-            throw new Error('Required parameter _class was null or undefined when calling classesCreate.');
+    public timeSlotsCreate(timeSlot: TimeSlot, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TimeSlot>;
+    public timeSlotsCreate(timeSlot: TimeSlot, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TimeSlot>>;
+    public timeSlotsCreate(timeSlot: TimeSlot, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TimeSlot>>;
+    public timeSlotsCreate(timeSlot: TimeSlot, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (timeSlot === null || timeSlot === undefined) {
+            throw new Error('Required parameter timeSlot was null or undefined when calling timeSlotsCreate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -270,12 +96,12 @@ export class ClassesService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/classes/`;
+        let localVarPath = `/api/time-slots/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Class>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<TimeSlot>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: _class,
+                body: timeSlot,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -287,19 +113,19 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint delete /api/classes/{id}/
-     * @param id A unique integer value identifying this class.
+     * Time slot API with filters by teacher and availability.
+     * @endpoint delete /api/time-slots/{id}/
+     * @param id A unique integer value identifying this time slot.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesDestroy(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public classesDestroy(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public classesDestroy(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public classesDestroy(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public timeSlotsDestroy(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
+    public timeSlotsDestroy(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
+    public timeSlotsDestroy(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
+    public timeSlotsDestroy(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling classesDestroy.');
+            throw new Error('Required parameter id was null or undefined when calling timeSlotsDestroy.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -331,7 +157,7 @@ export class ClassesService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/classes/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        let localVarPath = `/api/time-slots/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
             {
@@ -347,38 +173,16 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint get /api/classes/
-     * @param page A page number within the paginated result set.
-     * @param pageSize Number of results to return per page.
+     * Time slot API with filters by teacher and availability.
+     * @endpoint get /api/time-slots/
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesList(page?: number, pageSize?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<PaginatedClassDetailList>;
-    public classesList(page?: number, pageSize?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<PaginatedClassDetailList>>;
-    public classesList(page?: number, pageSize?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<PaginatedClassDetailList>>;
-    public classesList(page?: number, pageSize?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-
-        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'page',
-            <any>page,
-            QueryParamStyle.Form,
-            true,
-        );
-
-
-        localVarQueryParameters = this.addToHttpParams(
-            localVarQueryParameters,
-            'page_size',
-            <any>pageSize,
-            QueryParamStyle.Form,
-            true,
-        );
-
+    public timeSlotsList(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<TimeSlotDetail>>;
+    public timeSlotsList(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<TimeSlotDetail>>>;
+    public timeSlotsList(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<TimeSlotDetail>>>;
+    public timeSlotsList(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -410,12 +214,11 @@ export class ClassesService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/classes/`;
+        let localVarPath = `/api/time-slots/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<PaginatedClassDetailList>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<Array<TimeSlotDetail>>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -427,20 +230,23 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint patch /api/classes/{id}/
-     * @param id A unique integer value identifying this class.
-     * @param patchedClass 
+     * Mark a time slot as booked when a confirmed booking exists for it.
+     * @endpoint post /api/time-slots/{id}/mark-booked/
+     * @param id A unique integer value identifying this time slot.
+     * @param timeSlot 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesPartialUpdate(id: number, patchedClass?: PatchedClass, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Class>;
-    public classesPartialUpdate(id: number, patchedClass?: PatchedClass, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Class>>;
-    public classesPartialUpdate(id: number, patchedClass?: PatchedClass, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Class>>;
-    public classesPartialUpdate(id: number, patchedClass?: PatchedClass, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public timeSlotsMarkBookedCreate(id: number, timeSlot: TimeSlot, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TimeSlotDetail>;
+    public timeSlotsMarkBookedCreate(id: number, timeSlot: TimeSlot, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TimeSlotDetail>>;
+    public timeSlotsMarkBookedCreate(id: number, timeSlot: TimeSlot, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TimeSlotDetail>>;
+    public timeSlotsMarkBookedCreate(id: number, timeSlot: TimeSlot, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling classesPartialUpdate.');
+            throw new Error('Required parameter id was null or undefined when calling timeSlotsMarkBookedCreate.');
+        }
+        if (timeSlot === null || timeSlot === undefined) {
+            throw new Error('Required parameter timeSlot was null or undefined when calling timeSlotsMarkBookedCreate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -484,12 +290,12 @@ export class ClassesService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/classes/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        let localVarPath = `/api/time-slots/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/mark-booked/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Class>('patch', `${basePath}${localVarPath}`,
+        return this.httpClient.request<TimeSlotDetail>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: patchedClass,
+                body: timeSlot,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -501,23 +307,20 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Register a student into a class, update class status, and generate sessions from schedules.
-     * @endpoint post /api/classes/{id}/register-student/
-     * @param id A unique integer value identifying this class.
-     * @param classRegistration 
+     * Time slot API with filters by teacher and availability.
+     * @endpoint patch /api/time-slots/{id}/
+     * @param id A unique integer value identifying this time slot.
+     * @param patchedTimeSlot 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesRegisterStudentCreate(id: number, classRegistration: ClassRegistration, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClassRegistrationResponse>;
-    public classesRegisterStudentCreate(id: number, classRegistration: ClassRegistration, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClassRegistrationResponse>>;
-    public classesRegisterStudentCreate(id: number, classRegistration: ClassRegistration, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClassRegistrationResponse>>;
-    public classesRegisterStudentCreate(id: number, classRegistration: ClassRegistration, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public timeSlotsPartialUpdate(id: number, patchedTimeSlot?: PatchedTimeSlot, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TimeSlot>;
+    public timeSlotsPartialUpdate(id: number, patchedTimeSlot?: PatchedTimeSlot, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TimeSlot>>;
+    public timeSlotsPartialUpdate(id: number, patchedTimeSlot?: PatchedTimeSlot, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TimeSlot>>;
+    public timeSlotsPartialUpdate(id: number, patchedTimeSlot?: PatchedTimeSlot, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling classesRegisterStudentCreate.');
-        }
-        if (classRegistration === null || classRegistration === undefined) {
-            throw new Error('Required parameter classRegistration was null or undefined when calling classesRegisterStudentCreate.');
+            throw new Error('Required parameter id was null or undefined when calling timeSlotsPartialUpdate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -561,12 +364,12 @@ export class ClassesService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/classes/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/register-student/`;
+        let localVarPath = `/api/time-slots/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ClassRegistrationResponse>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<TimeSlot>('patch', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: classRegistration,
+                body: patchedTimeSlot,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -578,19 +381,19 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint get /api/classes/{id}/
-     * @param id A unique integer value identifying this class.
+     * Time slot API with filters by teacher and availability.
+     * @endpoint get /api/time-slots/{id}/
+     * @param id A unique integer value identifying this time slot.
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ClassDetail>;
-    public classesRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ClassDetail>>;
-    public classesRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ClassDetail>>;
-    public classesRetrieve(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public timeSlotsRetrieve(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TimeSlotDetail>;
+    public timeSlotsRetrieve(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TimeSlotDetail>>;
+    public timeSlotsRetrieve(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TimeSlotDetail>>;
+    public timeSlotsRetrieve(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling classesRetrieve.');
+            throw new Error('Required parameter id was null or undefined when calling timeSlotsRetrieve.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -623,9 +426,9 @@ export class ClassesService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/classes/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        let localVarPath = `/api/time-slots/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<ClassDetail>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<TimeSlotDetail>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 responseType: <any>responseType_,
@@ -639,23 +442,145 @@ export class ClassesService extends BaseService {
     }
 
     /**
-     * Class API: - GET /classes/ - GET /classes/{id}/ - GET /classes/?student_id&#x3D; - GET /classes/?teacher_id&#x3D; - GET /classes/by-student/{student_id}/ - GET /classes/by-teacher/{teacher_id}/
-     * @endpoint put /api/classes/{id}/
-     * @param id A unique integer value identifying this class.
-     * @param _class 
+     * Get available time slots of a teacher.
+     * @endpoint get /api/time-slots/teacher/{teacher_id}/available/
+     * @param teacherId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public classesUpdate(id: number, _class: Class, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Class>;
-    public classesUpdate(id: number, _class: Class, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Class>>;
-    public classesUpdate(id: number, _class: Class, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Class>>;
-    public classesUpdate(id: number, _class: Class, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (id === null || id === undefined) {
-            throw new Error('Required parameter id was null or undefined when calling classesUpdate.');
+    public timeSlotsTeacherAvailableList(teacherId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<TimeSlotDetail>>;
+    public timeSlotsTeacherAvailableList(teacherId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<TimeSlotDetail>>>;
+    public timeSlotsTeacherAvailableList(teacherId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<TimeSlotDetail>>>;
+    public timeSlotsTeacherAvailableList(teacherId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (teacherId === null || teacherId === undefined) {
+            throw new Error('Required parameter teacherId was null or undefined when calling timeSlotsTeacherAvailableList.');
         }
-        if (_class === null || _class === undefined) {
-            throw new Error('Required parameter _class was null or undefined when calling classesUpdate.');
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/time-slots/teacher/${this.configuration.encodeParam({name: "teacherId", value: teacherId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/available/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<TimeSlotDetail>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Get all time slots of a teacher.
+     * @endpoint get /api/time-slots/teacher/{teacher_id}/
+     * @param teacherId 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public timeSlotsTeacherList(teacherId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<Array<TimeSlotDetail>>;
+    public timeSlotsTeacherList(teacherId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<Array<TimeSlotDetail>>>;
+    public timeSlotsTeacherList(teacherId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<Array<TimeSlotDetail>>>;
+    public timeSlotsTeacherList(teacherId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (teacherId === null || teacherId === undefined) {
+            throw new Error('Required parameter teacherId was null or undefined when calling timeSlotsTeacherList.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (basicAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('basicAuth', 'Authorization', localVarHeaders, 'Basic ');
+
+        // authentication (cookieAuth) required
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/time-slots/teacher/${this.configuration.encodeParam({name: "teacherId", value: teacherId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<Array<TimeSlotDetail>>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * Time slot API with filters by teacher and availability.
+     * @endpoint put /api/time-slots/{id}/
+     * @param id A unique integer value identifying this time slot.
+     * @param timeSlot 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public timeSlotsUpdate(id: number, timeSlot: TimeSlot, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<TimeSlot>;
+    public timeSlotsUpdate(id: number, timeSlot: TimeSlot, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<TimeSlot>>;
+    public timeSlotsUpdate(id: number, timeSlot: TimeSlot, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<TimeSlot>>;
+    public timeSlotsUpdate(id: number, timeSlot: TimeSlot, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling timeSlotsUpdate.');
+        }
+        if (timeSlot === null || timeSlot === undefined) {
+            throw new Error('Required parameter timeSlot was null or undefined when calling timeSlotsUpdate.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -699,12 +624,12 @@ export class ClassesService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/classes/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
+        let localVarPath = `/api/time-slots/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Class>('put', `${basePath}${localVarPath}`,
+        return this.httpClient.request<TimeSlot>('put', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: _class,
+                body: timeSlot,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

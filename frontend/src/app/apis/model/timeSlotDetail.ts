@@ -8,22 +8,18 @@
  * Do not edit the class manually.
  */
 import { Teacher } from './teacher';
-import { ClassStatusEnum } from './classStatusEnum';
-import { Subject } from './subject';
+import { TimeSlotStatusEnum } from './timeSlotStatusEnum';
 
 
-export interface ClassDetail { 
+export interface TimeSlotDetail { 
     readonly id: number;
-    readonly subject: Subject;
     readonly teacher: Teacher;
-    readonly enrolled_students: number;
     readonly created_at: string;
-    level?: string;
-    max_students?: number;
-    description?: string;
-    status?: ClassStatusEnum;
+    start_at: string;
+    end_at: string;
+    status?: TimeSlotStatusEnum;
 }
-export namespace ClassDetail {
+export namespace TimeSlotDetail {
 }
 
 

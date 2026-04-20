@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { LoginService } from '../apis';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   standalone: true,
@@ -94,6 +95,7 @@ import { LoginService } from '../apis';
 export class Login {
   private router = inject(Router);
   private loginService = inject(LoginService);
+  private toastService = inject(ToastService);
 
   email = '';
   password = '';
@@ -113,12 +115,12 @@ export class Login {
       next: (res) => {
         sessionStorage.setItem('user', JSON.stringify(res));        
         this.isLoading = false;
-        alert('Login successful!');
+        this.toastService.success('Login successful!');
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading = false;        
-        alert(err.error.message);
+        this.toastService.error(err?.error?.message ?? 'Login failed.');
       }
     })
   }
