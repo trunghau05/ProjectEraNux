@@ -369,6 +369,7 @@ class LoginSerializer(serializers.Serializer):
 
 class UploadRecordingRequestSerializer(serializers.Serializer):
     file = serializers.FileField()
+    audio_file = serializers.FileField(required=False, allow_null=True)
     roomId = serializers.CharField(required=False, allow_blank=True)
     userId = serializers.CharField(required=False, allow_blank=True)
 
@@ -378,6 +379,7 @@ class UploadRecordingResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
     secure_url = serializers.URLField(required=False, allow_null=True)
     public_id = serializers.CharField(required=False, allow_null=True)
+    audio_url = serializers.URLField(required=False, allow_null=True)
     session_id = serializers.IntegerField(required=False, allow_null=True)
     duration = serializers.FloatField(required=False, allow_null=True)
     bytes = serializers.IntegerField(required=False, allow_null=True)

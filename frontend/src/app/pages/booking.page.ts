@@ -2,8 +2,9 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { Search } from '../components/shared/search/search.component';
-import { BookedTimeSlot, Booking as BookingPayload, BookingStatusEnum, BookingsService, Teacher, TimeSlot, TimeSlotsService, TutorBookedStudent } from '../apis';
+import { BookedTimeSlot, Booking as BookingPayload, BookingDetail, BookingStatusEnum, BookingsService, Room as RoomPayload, RoomsService, SessionDetail, SessionsService, Teacher, TimeSlot, TimeSlotsService, TutorBookedStudent } from '../apis';
 import { BookingStore } from '../stores/booking.store';
 import { ToastService } from '../services/toast.service';
 
@@ -44,8 +45,8 @@ import { ToastService } from '../services/toast.service';
       max-width: 72%;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
-      line-clamp: 3;
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
       -webkit-box-orient: vertical;
       word-break: break-word;
     }
@@ -240,8 +241,8 @@ import { ToastService } from '../services/toast.service';
                     <span class="booking-name">{{ tutor.name }}</span>
                     <p class="booking-role">{{ formatRoleLabel(tutor.role) }}</p>
                   </div>
-                  <div class="booking-badge" [ngClass]="getTutorBadgeClass(tutor.role)">
-                    <span>{{ formatRoleLabel(tutor.role) }}</span>
+                  <div class="booking-badge badge-active">
+                    <span>{{ formatTutorBadge(tutor.rating) }}</span>
                   </div>
                 </div>
                 <div class="booking-divider"></div>
@@ -253,10 +254,6 @@ import { ToastService } from '../services/toast.service';
                   <div class="booking-detail-row">
                     <span class="booking-detail-label">Phone:</span>
                     <span class="booking-detail-value">{{ tutor.phone || 'Updating' }}</span>
-                  </div>
-                  <div class="booking-detail-row">
-                    <span class="booking-detail-label">Rating:</span>
-                    <span class="booking-detail-value">{{ formatRating(tutor.rating) }}</span>
                   </div>
                   <div class="booking-detail-row bio">
                     <span class="booking-detail-label">Bio:</span>
@@ -383,6 +380,8 @@ import { ToastService } from '../services/toast.service';
 export class Booking implements OnInit{
   private bookingStore = inject(BookingStore);
   private bookingsService = inject(BookingsService);
+  private sessionsService = inject(SessionsService);
+  private roomsService = inject(RoomsService);
   private timeSlotsApi = inject(TimeSlotsService);
   private toastService = inject(ToastService);
 
@@ -448,10 +447,6 @@ export class Booking implements OnInit{
       ...item,
       time_slots: item.time_slots.filter((slot) => this.matchesSlotStatus(slot) && this.matchesSlotDate(slot)),
     }));
-  }
-
-  getTutorBadgeClass(role?: string): string {
-    return role === 'teacher' ? 'badge-pending' : 'badge-active';
   }
 
   getStudentBadgeClass(item: TutorBookedStudent): string {
@@ -529,6 +524,10 @@ export class Booking implements OnInit{
 
   formatRating(rating?: string | null): string {
     return rating ? `${rating}/5` : 'Not rated';
+  }
+
+  formatTutorBadge(rating?: string | null): string {
+    return rating || 'N/A';
   }
 
   formatRoleLabel(role?: string): string {
@@ -781,9 +780,11 @@ export class Booking implements OnInit{
     this.actionLoading.set(true);
     this.clearMessages();
 
-    this.bookingsService.bookingsConfirmCreate(bookingId).subscribe({
+    this.bookingsService.bookingsConfirmCreate(bookingId).pipe(
+      switchMap((booking) => this.ensureRoomForConfirmedBooking(booking)),
+    ).subscribe({
       next: () => {
-        this.setSuccessMessage('Booking confirmed and session created.');
+        this.setSuccessMessage('Booking confirmed, session created, and room is ready.');
         this.actionLoading.set(false);
         this.bookingStore.loadBookingData();
       },
@@ -792,6 +793,89 @@ export class Booking implements OnInit{
         this.actionLoading.set(false);
       },
     });
+  }
+
+  private ensureRoomForConfirmedBooking(booking: BookingDetail) {
+    return this.findTutorSessionForBooking(booking).pipe(
+      switchMap((session) => {
+        if (!session?.id) {
+          throw new Error('Confirmed session could not be found.');
+        }
+
+        return this.roomsService.roomsBySessionRetrieve(session.id).pipe(
+          map(() => session),
+          catchError((error) => {
+            if (error?.status !== 404) {
+              throw error;
+            }
+
+            return this.roomsService.roomsCreate({
+              session: session.id,
+              room_code: this.buildRoomCode(booking.teacher?.name),
+            } as RoomPayload).pipe(map(() => session));
+          }),
+        );
+      }),
+    );
+  }
+
+  private findTutorSessionForBooking(booking: BookingDetail) {
+    const tutorId = booking.teacher?.id;
+    const studentId = booking.student?.id;
+    const timeSlotId = booking.time_slot?.id;
+
+    if (!tutorId || !studentId || !timeSlotId) {
+      throw new Error('Missing booking data required to create a room.');
+    }
+
+    return this.sessionsService.sessionsByTutorList(tutorId).pipe(
+      map((sessions) => {
+        const matchedSession = sessions.find((session) =>
+          session.student?.id === studentId && session.time_slot?.id === timeSlotId,
+        );
+
+        if (matchedSession) {
+          return matchedSession;
+        }
+
+        return [...sessions]
+          .filter((session) => session.student?.id === studentId)
+          .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())[0] ?? null;
+      }),
+      switchMap((session) => session ? of(session) : this.fetchSessionByStudentFallback(studentId, tutorId, timeSlotId)),
+    );
+  }
+
+  private fetchSessionByStudentFallback(studentId: number, tutorId: number, timeSlotId: number) {
+    return this.sessionsService.sessionsByStudentList(studentId).pipe(
+      map((sessions) => {
+        const matchedSession = sessions.find((session) =>
+          session.teacher?.id === tutorId && session.time_slot?.id === timeSlotId,
+        );
+
+        if (!matchedSession) {
+          throw new Error('Confirmed session could not be found.');
+        }
+
+        return matchedSession;
+      }),
+    );
+  }
+
+  private buildRoomCode(tutorName?: string): string {
+    const normalizedTutorName = (tutorName ?? 'tutor')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'tutor';
+
+    const randomSuffix = Array.from({ length: 6 }, () => {
+      const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      return characters.charAt(Math.floor(Math.random() * characters.length));
+    }).join('');
+
+    return `${normalizedTutorName}-${randomSuffix}`;
   }
 
   private rejectBookingRequest(bookingId: number): void {

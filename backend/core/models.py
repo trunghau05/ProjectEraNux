@@ -295,6 +295,7 @@ class Session(TimeStampedModel):
 
     recording_url = models.TextField(blank=True, null=True)
     recording_public_id = models.CharField(max_length=255, blank=True, null=True)
+    recording_audio_url = models.TextField(blank=True, null=True)
     recording_uploaded_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:

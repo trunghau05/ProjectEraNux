@@ -26,6 +26,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   roomId: string = '';
   userId: string = '';
   userName: string = '';
+  canManageRecording = false;
   
   // Preview states before joining
   previewStream: MediaStream | null = null;
@@ -46,8 +47,11 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   recordingUploadMessage: string = '';
   recordingUploadStatus: 'idle' | 'success' | 'error' = 'idle';
   latestRecordingUrl: string = '';
+  latestRecordingAudioUrl: string = '';
   private mediaRecorder: MediaRecorder | null = null;
+  private mediaRecorderAudio: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
+  private recordedAudioChunks: Blob[] = [];
   private recordingTimerInterval: any = null;
   private readonly backendBaseUrl = environment.apiBaseUrl;
 
@@ -251,6 +255,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.userId = user.id.toString();
     this.userName = `User ${user.id}`; // Default fallback
     const role = (user.role || '').toLowerCase().trim();
+    this.canManageRecording = role === 'teacher' || role === 'tutor';
 
     console.log('User info loaded:', { userId: this.userId, userName: this.userName, role });
 
@@ -279,20 +284,11 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Generate random room ID
-   */
-  generateRoomId(): void {
-    const timestamp = Date.now().toString(36);
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    this.roomId = `${timestamp}-${randomStr}`;
-  }
-
-  /**
    * Start the video call
    */
   async startCall(): Promise<void> {
     if (!this.roomId) {
-      this.errorMessage = 'Please enter a room code or generate a new one.';
+      this.errorMessage = 'Room code is missing. Please re-open the session link.';
       return;
     }
 
@@ -871,8 +867,27 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
         }
       };
 
+      // Create separate audio recorder for MP3/WAV extraction
+      const audioOptions = { mimeType: 'audio/webm' };
+      if (!MediaRecorder.isTypeSupported(audioOptions.mimeType)) {
+        audioOptions.mimeType = 'audio/webm;codecs=opus';
+      }
+      if (!MediaRecorder.isTypeSupported(audioOptions.mimeType)) {
+        audioOptions.mimeType = 'audio/mp4';
+      }
+      
+      this.mediaRecorderAudio = new MediaRecorder(audioDestination.stream, audioOptions);
+      this.recordedAudioChunks = [];
+
+      this.mediaRecorderAudio.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          this.recordedAudioChunks.push(event.data);
+        }
+      };
+
       this.mediaRecorder.onstop = () => {
         const recordedBlob = this.buildRecordingBlob();
+        const recordedAudioBlob = this.buildRecordingAudioBlob();
 
         // Cleanup streams
         displayStream.getTracks().forEach(track => track.stop());
@@ -882,7 +897,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
         audioContext.close();
 
         if (recordedBlob) {
-          void this.uploadRecording(recordedBlob);
+          void this.uploadRecording(recordedBlob, recordedAudioBlob);
         }
       };
 
@@ -894,6 +909,9 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       };
 
       this.mediaRecorder.start(1000); // Collect data every second
+      if (this.mediaRecorderAudio) {
+        this.mediaRecorderAudio.start(1000); // Collect audio data every second
+      }
       this.isRecording = true;
       this.startRecordingTimer();
 
@@ -910,6 +928,9 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   stopRecording(): void {
     if (this.mediaRecorder && this.isRecording) {
       this.mediaRecorder.stop();
+      if (this.mediaRecorderAudio) {
+        this.mediaRecorderAudio.stop();
+      }
       this.isRecording = false;
       this.stopRecordingTimer();
       console.log('Screen recording stopped');
@@ -939,20 +960,158 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   /**
-   * Upload recorded video to backend (Cloudinary)
+   * Build audio blob from recorded audio chunks
    */
-  private async uploadRecording(blob: Blob): Promise<void> {
+  private buildRecordingAudioBlob(): Blob | null {
+    if (this.recordedAudioChunks.length === 0) {
+      console.warn('No recorded audio data to process');
+      return null;
+    }
+
+    // Detect MIME type used by audio recorder
+    let mimeType = 'audio/webm';
+    if (this.mediaRecorderAudio?.mimeType) {
+      mimeType = this.mediaRecorderAudio.mimeType;
+    }
+
+    const audioBlob = new Blob(this.recordedAudioChunks, { type: mimeType });
+    this.recordedAudioChunks = [];
+    return audioBlob;
+  }
+
+  /**
+   * Convert recorded audio to WAV before upload (fallback to original blob if conversion fails)
+   */
+  private async prepareAudioBlobForUpload(audioBlob: Blob): Promise<{ blob: Blob; extension: string }> {
+    if (audioBlob.type.includes('wav')) {
+      return { blob: audioBlob, extension: 'wav' };
+    }
+
+    if (audioBlob.type.includes('mpeg') || audioBlob.type.includes('mp3')) {
+      return { blob: audioBlob, extension: 'mp3' };
+    }
+
+    try {
+      const audioBuffer = await this.decodeAudioBlob(audioBlob);
+      const wavBlob = this.audioBufferToWavBlob(audioBuffer);
+      return { blob: wavBlob, extension: 'wav' };
+    } catch (error) {
+      console.warn('Audio conversion to WAV failed, uploading original audio blob:', error);
+      return { blob: audioBlob, extension: this.detectAudioExtension(audioBlob.type) };
+    }
+  }
+
+  private detectAudioExtension(mimeType: string): string {
+    if (mimeType.includes('wav')) {
+      return 'wav';
+    }
+    if (mimeType.includes('mpeg') || mimeType.includes('mp3')) {
+      return 'mp3';
+    }
+    if (mimeType.includes('ogg')) {
+      return 'ogg';
+    }
+    if (mimeType.includes('mp4') || mimeType.includes('aac')) {
+      return 'm4a';
+    }
+    return 'webm';
+  }
+
+  private async decodeAudioBlob(audioBlob: Blob): Promise<AudioBuffer> {
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const audioContext = new AudioContext();
+    try {
+      return await audioContext.decodeAudioData(arrayBuffer.slice(0));
+    } finally {
+      await audioContext.close();
+    }
+  }
+
+  private audioBufferToWavBlob(audioBuffer: AudioBuffer): Blob {
+    const channels = audioBuffer.numberOfChannels;
+    const sampleRate = audioBuffer.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+
+    const channelData: Float32Array[] = [];
+    for (let channel = 0; channel < channels; channel++) {
+      channelData.push(audioBuffer.getChannelData(channel));
+    }
+
+    const samplesLength = audioBuffer.length;
+    const blockAlign = channels * (bitDepth / 8);
+    const byteRate = sampleRate * blockAlign;
+    const dataSize = samplesLength * blockAlign;
+    const buffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buffer);
+
+    // RIFF header
+    this.writeWavString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    this.writeWavString(view, 8, 'WAVE');
+
+    // fmt chunk
+    this.writeWavString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, channels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+
+    // data chunk
+    this.writeWavString(view, 36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    let offset = 44;
+    for (let i = 0; i < samplesLength; i++) {
+      for (let channel = 0; channel < channels; channel++) {
+        const sample = Math.max(-1, Math.min(1, channelData[channel][i]));
+        const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+        view.setInt16(offset, intSample, true);
+        offset += 2;
+      }
+    }
+
+    return new Blob([buffer], { type: 'audio/wav' });
+  }
+
+  private writeWavString(view: DataView, offset: number, text: string): void {
+    for (let i = 0; i < text.length; i++) {
+      view.setUint8(offset + i, text.charCodeAt(i));
+    }
+  }
+
+  /**
+   * Upload recorded video and audio to backend (Cloudinary)
+   */
+  private async uploadRecording(blob: Blob, audioBlob: Blob | null = null): Promise<void> {
     this.isUploadingRecording = true;
     this.recordingUploadMessage = 'Uploading video to Cloudinary...';
     this.recordingUploadStatus = 'idle';
     this.latestRecordingUrl = '';
+    this.latestRecordingAudioUrl = '';
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
     const fileName = `video-call-${this.roomId || 'room'}-${timestamp}.webm`;
     const formData = new FormData();
     formData.append('file', blob, fileName);
+
+    if (audioBlob) {
+      this.recordingUploadMessage = 'Converting audio before upload...';
+      this.cdr.markForCheck();
+
+      const preparedAudio = await this.prepareAudioBlobForUpload(audioBlob);
+      const audioFileName = `video-call-${this.roomId || 'room'}-${timestamp}-audio.${preparedAudio.extension}`;
+      formData.append('audio_file', preparedAudio.blob, audioFileName);
+    }
+
     formData.append('roomId', this.roomId || 'unknown-room');
     formData.append('userId', this.userId || 'anonymous');
+
+    this.recordingUploadMessage = 'Uploading video to Cloudinary...';
+    this.cdr.markForCheck();
 
     try {
       const response = await fetch(`${this.backendBaseUrl}/api/media/upload-recording/`, {
@@ -968,6 +1127,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
 
       this.latestRecordingUrl = result.secure_url || '';
+      this.latestRecordingAudioUrl = result.audio_url || '';
       this.recordingUploadMessage = this.latestRecordingUrl
         ? 'Saved successfully.'
         : 'Upload succeeded but no video link was returned.';

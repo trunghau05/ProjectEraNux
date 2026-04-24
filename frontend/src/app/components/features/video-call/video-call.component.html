@@ -10,40 +10,44 @@
         <span>Room: <strong>{{ roomId }}</strong></span>
         <span class="participants">{{ getParticipantCount() }} people</span>
         <span class="call-duration">{{ callDurationDisplay }}</span>
-        @if (isRecording) {
-          <span class="recording-indicator">
-            <span class="recording-dot"></span>
-            <span>Rec: {{ recordingDurationDisplay }}</span>
-          </span>
-        }
-        @if (isUploadingRecording) {
-          <span class="recording-indicator uploading">
-            <span>Uploading video...</span>
-          </span>
-        }
-        @if (recordingUploadMessage && !isUploadingRecording) {
-          <span class="recording-indicator" [class.success]="recordingUploadStatus === 'success'" [class.error]="recordingUploadStatus === 'error'">
-            <span>{{ recordingUploadMessage }}</span>
-          </span>
-        }
-        @if (latestRecordingUrl) {
-          <button class="btn-header-action btn-play" (click)="openLatestRecording()" title="Play recording">
-            <mat-icon>play_circle</mat-icon>
-          </button>
+        @if (canManageRecording) {
+          @if (isRecording) {
+            <span class="recording-indicator">
+              <span class="recording-dot"></span>
+              <span>Rec: {{ recordingDurationDisplay }}</span>
+            </span>
+          }
+          @if (isUploadingRecording) {
+            <span class="recording-indicator uploading">
+              <span>Uploading video...</span>
+            </span>
+          }
+          @if (recordingUploadMessage && !isUploadingRecording) {
+            <span class="recording-indicator" [class.success]="recordingUploadStatus === 'success'" [class.error]="recordingUploadStatus === 'error'">
+              <span>{{ recordingUploadMessage }}</span>
+            </span>
+          }
+          @if (latestRecordingUrl) {
+            <button class="btn-header-action btn-play" (click)="openLatestRecording()" title="Play recording">
+              <mat-icon>play_circle</mat-icon>
+            </button>
+          }
         }
       </div>
       <div class="header-actions">
-        <button
-        class="btn-header-action"
-        [class.recording]="isRecording"
-        (click)="toggleRecording()"
-        title="{{ isRecording ? 'Stop recording' : 'Record screen' }}"
-        >
-        <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
-        @if (isRecording) {
-          <span class="recording-pulse"></span>
+        @if (canManageRecording) {
+          <button
+          class="btn-header-action"
+          [class.recording]="isRecording"
+          (click)="toggleRecording()"
+          title="{{ isRecording ? 'Stop recording' : 'Record screen' }}"
+          >
+          <mat-icon>{{ isRecording ? 'stop_circle' : 'fiber_manual_record' }}</mat-icon>
+          @if (isRecording) {
+            <span class="recording-pulse"></span>
+          }
+          </button>
         }
-        </button>
         <button
           class="btn-header-action"
           [class.active]="isChatOpen"
@@ -146,23 +150,14 @@
           <!-- Room ID input -->
           <div class="form-group">
             <label for="roomId">Room code</label>
-            <div class="input-with-button">
-              <input
-                id="roomId"
-                type="text"
-                [(ngModel)]="roomId"
-                placeholder="Enter a room code or create a new one"
-                class="field"
-              />
-              <button 
-                class="btn-generate" 
-                (click)="generateRoomId()"
-                title="Generate a new room code"
-              >
-                <mat-icon>casino</mat-icon>
-                <span>Generate</span>
-              </button>
-            </div>
+            <input
+              id="roomId"
+              type="text"
+              [(ngModel)]="roomId"
+              readonly
+              placeholder="Room code will be provided automatically"
+              class="field"
+            />
           </div>
 
           <button

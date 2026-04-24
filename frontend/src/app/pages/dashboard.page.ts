@@ -2,9 +2,10 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { UserInfo } from "../components/features/user-info/user-info.component";
 import { MatIconModule } from "@angular/material/icon";
-import { RoomsService, SessionDetail } from "../apis";
+import { BookingsService, RoomsService, SessionDetail, Teacher, TeachersService } from "../apis";
 import { Router } from "@angular/router";
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom, forkJoin, of } from "rxjs";
+import { catchError } from "rxjs/operators";
 import { StudentClassBoardComponent } from "../components/features/student/class-board/class-board.component";
 import { StudentScheduleBoardComponent } from "../components/features/student/schedule-board/schedule-board.component";
 import { UserService } from "../services/user.service";
@@ -12,6 +13,13 @@ import { ClassListStore } from "../stores/class.store";
 import { SessionListStore } from "../stores/session.store";
 
 type SessionJoinState = 'ongoing' | 'upcoming' | 'finished';
+
+type BookedTutorCard = {
+    tutor: Teacher;
+    status: string;
+    nextSlot: string | null;
+    isBooked: boolean;
+};
 
 @Component({
     selector: 'app-dashboard',
@@ -121,95 +129,40 @@ type SessionJoinState = 'ongoing' | 'upcoming' | 'finished';
                         </div>
                     </div>
                     <div class="booking mt-20 flex-cen" style="gap: 20px; padding: 0;">
-                        <!-- Booking Card 1 -->
+                        @for (card of bookedTutorCards(); track card.tutor.id) {
                         <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
                             <div class="flex-cen" style="gap: 12px;">
-                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <img [src]="card.tutor.img || 'default-avatar.jpg'" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
                                 <div class="flex-col" style="gap: 4px; flex: 1;">
-                                    <span style="font-size: 12px; font-weight: 500;">Nguyễn Văn Minh</span>
-                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Teacher</p>
+                                    <span style="font-size: 12px; font-weight: 500;">{{ card.tutor.name }}</span>
+                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">{{ card.tutor.role === 'tutor' ? 'Tutor' : 'Teacher' }}</p>
                                 </div>
-                                <div style="background-color: #6b46c1; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
-                                    <span style="font-size: 9px; color: white; font-weight: 500;">Active</span>
+                                @if (card.isBooked) {
+                                <div [ngStyle]="{'background-color': getBookingStatusColor(card.status)}" style="padding: 4px 8px; border-radius: 4px;" class="flex-cen">
+                                    <span style="font-size: 9px; color: white; font-weight: 500;">{{ getBookingStatusLabel(card.status) }}</span>
                                 </div>
+                                }
                             </div>
                             <div style="border-bottom: 1px solid #f1f1f1;"></div>
                             <div class="flex-col" style="gap: 8px;">
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Mathematics</span>
+                                    <span style="font-size: 11px; color: #acacacff;">Email:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">{{ card.tutor.email }}</span>
                                 </div>
+                                @if (card.tutor.rating) {
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">2h/week</span>
+                                    <span style="font-size: 11px; color: #acacacff;">Rating:</span>
+                                    <span style="font-size: 11px; font-weight: 500;">{{ card.tutor.rating }}/5</span>
                                 </div>
+                                }
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Next class:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Today 3PM</span>
+                                    <span style="font-size: 11px; color: #acacacff;">{{ card.isBooked ? 'Next Session:' : 'Status:' }}</span>
+                                    <span style="font-size: 11px; font-weight: 500;">{{ card.isBooked ? (card.nextSlot || 'No upcoming') : 'Not booked' }}</span>
                                 </div>
                             </div>
-                            <button style="background-color: #6b46c1; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
+                            <button [ngStyle]="{'background-color': card.isBooked ? getBookingStatusColor(card.status) : '#6b46c1'}" style="color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;" (click)="navigateToBooking()">{{ card.isBooked ? 'View Details' : 'Book Session' }}</button>
                         </div>
-
-                        <!-- Booking Card 2 -->
-                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
-                            <div class="flex-cen" style="gap: 12px;">
-                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                                <div class="flex-col" style="gap: 4px; flex: 1;">
-                                    <span style="font-size: 12px; font-weight: 500;">Trần Thị Hương</span>
-                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Tutor</p>
-                                </div>
-                                <div style="background-color: #7e72bdff; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
-                                    <span style="font-size: 9px; color: white; font-weight: 500;">Pending</span>
-                                </div>
-                            </div>
-                            <div style="border-bottom: 1px solid #f1f1f1;"></div>
-                            <div class="flex-col" style="gap: 8px;">
-                                <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Physics</span>
-                                </div>
-                                <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">1.5h/week</span>
-                                </div>
-                                <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Start date:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Jan 20, 2026</span>
-                                </div>
-                            </div>
-                            <button style="background-color: #7e72bdff; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
-                        </div>
-
-                        <!-- Booking Card 3 -->
-                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
-                            <div class="flex-cen" style="gap: 12px;">
-                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                                <div class="flex-col" style="gap: 4px; flex: 1;">
-                                    <span style="font-size: 12px; font-weight: 500;">Lê Văn Hải</span>
-                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Teacher</p>
-                                </div>
-                                <div style="background-color: #3432c0ff; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
-                                    <span style="font-size: 9px; color: white; font-weight: 500;">Completed</span>
-                                </div>
-                            </div>
-                            <div style="border-bottom: 1px solid #f1f1f1;"></div>
-                            <div class="flex-col" style="gap: 8px;">
-                                <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Chemistry</span>
-                                </div>
-                                <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">2h/week</span>
-                                </div>
-                                <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Ended:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Dec 31, 2025</span>
-                                </div>
-                            </div>
-                            <button style="background-color: #3432c0ff; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">Ended</button>
-                        </div>
+                        }
                     </div>
                 </div>
             }
@@ -227,7 +180,7 @@ type SessionJoinState = 'ongoing' | 'upcoming' | 'finished';
                     </div>
 
                     <div class="label flex-betw mt-20">
-                        <span>Your Cources</span>
+                        <span>Your Courses</span>
                         <div class="flex-cen" style="gap: 10px;"> 
                             <span>More</span>
                             <mat-icon>arrow_right_alt</mat-icon>
@@ -404,6 +357,8 @@ export class Dashboard implements OnInit {
     private classListStore = inject(ClassListStore);
     private sessionListStore = inject(SessionListStore);
     private roomsService = inject(RoomsService);
+    private bookingsService = inject(BookingsService);
+    private teachersService = inject(TeachersService);
     private router = inject(Router);
     private userService = inject(UserService);
 
@@ -412,6 +367,7 @@ export class Dashboard implements OnInit {
     roomCodeBySession = signal<Record<number, string>>({});
     selectedRoomCode = signal<string>('');
     joiningSessionId = signal<number | null>(null);
+    bookedTutorCards = signal<BookedTutorCard[]>([]);
 
     user = this.userService.user;
 
@@ -425,6 +381,69 @@ export class Dashboard implements OnInit {
     ngOnInit(): void {
         this.classListStore.loadClassList();
         this.sessionListStore.loadSessionList();
+        if (this.user().role === 'student') {
+            this.loadBookedTutors();
+        }
+    }
+
+    private loadBookedTutors(): void {
+        forkJoin({
+            bookings: this.bookingsService.bookingsList().pipe(catchError(() => of([]))),
+            tutors: this.teachersService.teachersTutorsList().pipe(catchError(() => of([]))),
+        }).subscribe(({ bookings, tutors }) => {
+            const bookedTutorMap = new Map<number, BookedTutorCard>();
+
+            for (const booking of bookings) {
+                const tutor = booking.teacher;
+                if (!bookedTutorMap.has(tutor.id)) {
+                    const nextSlot = booking.time_slot
+                        ? new Intl.DateTimeFormat('vi-VN', {
+                            day: '2-digit', month: '2-digit', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          }).format(new Date(booking.time_slot.start_at))
+                        : null;
+                    bookedTutorMap.set(tutor.id, {
+                        tutor,
+                        status: booking.status ?? 'pending',
+                        nextSlot,
+                        isBooked: true,
+                    });
+                }
+                if (bookedTutorMap.size >= 3) break;
+            }
+
+            const cards: BookedTutorCard[] = Array.from(bookedTutorMap.values());
+
+            if (cards.length < 3) {
+                const bookedIds = new Set(bookedTutorMap.keys());
+                const remaining = tutors.filter(t => !bookedIds.has(t.id));
+                const shuffled = remaining.sort(() => Math.random() - 0.5);
+                for (const tutor of shuffled) {
+                    if (cards.length >= 3) break;
+                    cards.push({ tutor, status: '', nextSlot: null, isBooked: false });
+                }
+            }
+
+            this.bookedTutorCards.set(cards);
+        });
+    }
+
+    getBookingStatusColor(status: string): string {
+        switch (status) {
+            case 'confirmed': return '#6b46c1';
+            case 'pending': return '#7e72bdff';
+            case 'cancelled': return '#bb295fff';
+            default: return '#3432c0ff';
+        }
+    }
+
+    getBookingStatusLabel(status: string): string {
+        switch (status) {
+            case 'confirmed': return 'Confirmed';
+            case 'pending': return 'Pending';
+            case 'cancelled': return 'Cancelled';
+            default: return status;
+        }
     }
 
     private toLocalDateKey(dateValue: string | Date): string {

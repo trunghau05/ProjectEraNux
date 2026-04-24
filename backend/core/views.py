@@ -95,6 +95,7 @@ class UploadRecordingView(APIView):
     )
     def post(self, request):
         video_file = request.FILES.get('file')
+        audio_file = request.FILES.get('audio_file')
         room_id = request.data.get('roomId', 'unknown-room')
         user_id = request.data.get('userId', 'anonymous')
 
@@ -142,6 +143,7 @@ class UploadRecordingView(APIView):
         public_id = f"video-call/{room_id}/{user_id}-{video_file.name.rsplit('.', 1)[0]}"
 
         try:
+            # Upload video
             result = cloudinary_uploader.upload_large(
                 video_file,
                 resource_type='video',
@@ -152,6 +154,23 @@ class UploadRecordingView(APIView):
 
             secure_url = result.get('secure_url')
             uploaded_public_id = result.get('public_id')
+            audio_url = None
+
+            # Upload audio if provided
+            if audio_file:
+                try:
+                    audio_public_id = f"video-call/{room_id}/{user_id}-{audio_file.name.rsplit('.', 1)[0]}"
+                    audio_result = cloudinary_uploader.upload(
+                        audio_file,
+                        resource_type='video',
+                        folder='eranux-recordings-audio',
+                        public_id=audio_public_id,
+                        overwrite=False,
+                    )
+                    audio_url = audio_result.get('secure_url')
+                except Exception as audio_exc:
+                    print(f"Failed to upload audio: {str(audio_exc)}")
+                    # Continue even if audio upload fails
 
             session_id = None
             if room_id:
@@ -159,8 +178,13 @@ class UploadRecordingView(APIView):
                 if room and room.session:
                     room.session.recording_url = secure_url
                     room.session.recording_public_id = uploaded_public_id
+                    if audio_url:
+                        room.session.recording_audio_url = audio_url
                     room.session.recording_uploaded_at = timezone.now()
-                    room.session.save(update_fields=['recording_url', 'recording_public_id', 'recording_uploaded_at'])
+                    update_fields = ['recording_url', 'recording_public_id', 'recording_uploaded_at']
+                    if audio_url:
+                        update_fields.append('recording_audio_url')
+                    room.session.save(update_fields=update_fields)
                     session_id = room.session.id
 
             return Response(
@@ -169,6 +193,7 @@ class UploadRecordingView(APIView):
                     'message': 'Upload video thành công',
                     'secure_url': secure_url,
                     'public_id': uploaded_public_id,
+                    'audio_url': audio_url,
                     'session_id': session_id,
                     'duration': result.get('duration'),
                     'bytes': result.get('bytes'),

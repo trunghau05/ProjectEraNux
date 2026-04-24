@@ -8,8 +8,6 @@ pip install djangorestframework drf-spectacular
 pip show django-cors-headers
 pip install djangorestframework
 pip install google-genai
-pip install mongoengine
-pip install mongoengine dnspython
 pip install cloudinary
 python manage.py makemigrations
 python manage.py migrate
@@ -35,6 +33,7 @@ openapi-generator-cli generate -i http://localhost:8000/api/schema/ -g typescrip
 npm run start
 ---
 STT
-.\.venv\Scripts\Activate.ps1
 cd stt_server
+.\.venv\Scripts\Activate.ps1
 python -m uvicorn app:app --host 0.0.0.0 --port 8001
+deactivate
