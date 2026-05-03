@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { Search } from '../components/shared/search/search.component';
 import { BookedTimeSlot, Booking as BookingPayload, BookingDetail, BookingStatusEnum, BookingsService, Room as RoomPayload, RoomsService, SessionDetail, SessionsService, Teacher, TimeSlot, TimeSlotsService, TutorBookedStudent } from '../apis';
 import { BookingStore } from '../stores/booking.store';
@@ -175,6 +175,45 @@ import { ToastService } from '../services/toast.service';
     .booking-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     .booking-container::-webkit-scrollbar-thumb { background: #6b46c1; border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
     .booking-container::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(9, 9, 18, 0.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    .modal-box { width: min(100%, 500px); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 34px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column; }
+    .modal-inner { width: 100%; box-sizing: border-box; background: #fff; padding: 26px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2px; }
+    .modal-header h4 { margin: 0; font-size: 18px; color: #1a1a2e; }
+    .modal-close-btn { flex-shrink: 0; width: 28px; height: 28px; border: none; background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #9a9ab0; transition: background 0.15s, color 0.15s; padding: 0; margin-top: -2px; }
+    .modal-close-btn:hover { background: #f1f0f8; color: #1a1a2e; }
+    .modal-tutor-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: #fafafa; border-radius: 10px; border: 1px solid #ede9f8; }
+    .modal-tutor-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .modal-tutor-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .modal-tutor-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+    .modal-tutor-role { font-size: 11px; color: #9a9ab0; }
+    .modal-section-label { font-size: 11px; font-weight: 700; color: #6b46c1; text-transform: uppercase; letter-spacing: 0.04em; }
+    .modal-slot-list { display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #c4b5fd #f1f1f1; }
+    .modal-slot-list::-webkit-scrollbar { width: 6px; }
+    .modal-slot-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 6px; }
+    .modal-slot-list::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 6px; border: 1px solid transparent; background-clip: padding-box; }
+    .modal-slot-list::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+    .modal-slot-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #e6eef7; background: #fff; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+    .modal-slot-item:hover:not(.pending) { border-color: #c4b5fd; background: #faf7ff; }
+    .modal-slot-item.selected { border-color: #6b46c1; }
+    .modal-slot-item.pending { opacity: 0.65; cursor: default; }
+    .modal-slot-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid #d1d5db; background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.15s, background 0.15s; }
+    .modal-slot-item.selected .modal-slot-checkbox { border-color: #6b46c1; background: #6b46c1; }
+    .modal-slot-item.pending .modal-slot-checkbox { border-color: #7e72bd; background: #7e72bd; }
+    .modal-slot-check-icon { color: white; font-size: 12px; width: 12px; height: 12px; line-height: 12px; }
+    .modal-slot-time { flex: 1; font-size: 11px; font-weight: 500; color: #3f2e7e; }
+    .modal-slot-pending-label { font-size: 9px; font-weight: 600; color: #7e72bd; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+    .modal-summary { font-size: 11px; color: #6a6a6a; }
+    .modal-summary strong { color: #6b46c1; }
+    .modal-helper { font-size: 11px; color: #6a6a6a; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 2px; }
+    .modal-primary { flex: 1; background: #6b46c1; color: #fff; border: none; border-radius: 6px; padding: 10px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .modal-primary:hover:not(:disabled) { background: #553c9a; }
+    .modal-primary:disabled { background: #c4b5fd; cursor: not-allowed; }
+    .modal-secondary { flex: 1; background: #edf0fa; color: #4a4a4a; border: none; border-radius: 6px; padding: 10px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .modal-reject { flex: 1; background: #fee2e2; color: #b91c1c; border: none; border-radius: 6px; padding: 10px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .modal-reject:hover:not(:disabled) { background: #fecaca; }
+    .modal-reject:disabled { background: #fef2f2; color: #f87171; cursor: not-allowed; }
   `,
   template: `
     <div class="booking-container">
@@ -331,39 +370,8 @@ import { ToastService } from '../services/toast.service';
                   </div>
                 </div>
 
-                @if (isTutorExpanded(tutor.id)) {
-                  @if (isTutorSlotsLoading(tutor.id)) {
-                    <div class="slot-list">
-                      <div class="slot-item">
-                        <span class="slot-time">Loading available slots...</span>
-                      </div>
-                    </div>
-                  } @else if (getAvailableSlotsByTutor(tutor.id).length > 0) {
-                    <div class="slot-list">
-                      @for (slot of getAvailableSlotsByTutor(tutor.id); track slot.id) {
-                        <div class="slot-item">
-                          <span class="slot-time">{{ formatSlotRange(slot.start_at, slot.end_at) }}</span>
-                          <button
-                            class="booking-button icon-only"
-                            [ngClass]="isSlotPending(slot.id) ? 'btn-pending' : 'btn-active'"
-                            [disabled]="actionLoading()"
-                            (click)="toggleSlotBooking(tutor.id, slot.id)"
-                            [attr.aria-label]="isSlotPending(slot.id) ? 'Cancel pending booking request' : 'Book slot'"
-                            [attr.title]="isSlotPending(slot.id) ? 'Cancel pending booking request' : 'Book slot'">
-                            <mat-icon>{{ isSlotPending(slot.id) ? 'hourglass_top' : 'add' }}</mat-icon>
-                          </button>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    <div class="booking-empty" style="margin-top:0">
-                      <span class="booking-empty-text">No available time slots.</span>
-                    </div>
-                  }
-                }
-
-                <button class="booking-button btn-active" (click)="toggleTutorDetails(tutor.id)">
-                  {{ isTutorExpanded(tutor.id) ? 'Hide Detail' : 'View Detail' }}
+                <button class="booking-button btn-active" (click)="openBookingModal(tutor)">
+                  Book
                 </button>
               </div>
             }
@@ -404,28 +412,8 @@ import { ToastService } from '../services/toast.service';
                     <span class="booking-detail-value">{{ getSlotSummary(item) }}</span>
                   </div>
                 </div>
-                @if (isBookedSlotsExpanded(item.student.id)) {
-                  <div class="slot-list">
-                    @for (slot of item.time_slots; track trackSlot($index, slot)) {
-                      <div class="slot-item" [class.clickable]="slot.booking_status === 'pending'" (click)="toggleTutorPendingActions(slot)">
-                        <span class="slot-time">{{ formatDateTime(slot.start_at) }}</span>
-                        <div class="flex-cen" style="gap: 8px;">
-                          <span class="slot-status" [ngClass]="getSlotStatusClass(slot.booking_status)">
-                            {{ formatStatusLabel(slot.booking_status) }}
-                          </span>
-                        </div>
-                      </div>
-                      @if (slot.booking_status === 'pending' && isTutorPendingActionOpen(slot)) {
-                        <div class="slot-actions">
-                          <button class="slot-action-button reject" [disabled]="actionLoading()" (click)="rejectBooking(slot.booking_id, $event)">Reject</button>
-                          <button class="slot-action-button confirm" [disabled]="actionLoading()" (click)="confirmBooking(slot.booking_id, slot.id, $event)">Confirm</button>
-                        </div>
-                      }
-                    }
-                  </div>
-                }
-                <button class="booking-button" [ngClass]="getButtonClass(getLatestSlot(item.time_slots)?.booking_status)" (click)="toggleBookedSlots(item.student.id)">
-                  {{ isBookedSlotsExpanded(item.student.id) ? 'Hide booked slots' : 'View booked slots' }}
+                <button class="booking-button" [ngClass]="getButtonClass(getLatestSlot(item.time_slots)?.booking_status)" (click)="openStudentSlotsModal(item)">
+                  View booked slots
                 </button>
               </div>
             }
@@ -442,7 +430,165 @@ import { ToastService } from '../services/toast.service';
           <span class="booking-empty-text">This page currently supports students viewing tutors and tutors viewing booked students.</span>
         </div>
       }
-    </div>  
+    </div>
+
+    @if (bookingModalTutor) {
+      <div class="modal-overlay" (click)="closeBookingModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <div class="modal-inner">
+            <div class="modal-header">
+              <h4>Book a session</h4>
+              <button type="button" class="modal-close-btn" (click)="closeBookingModal()" aria-label="Close">
+                <mat-icon style="font-size:18px;width:18px;height:18px;line-height:18px">close</mat-icon>
+              </button>
+            </div>
+
+            <div class="modal-tutor-row">
+              <img [src]="bookingModalTutor.img || 'default-avatar.jpg'" alt="avatar" class="modal-tutor-avatar">
+              <div class="modal-tutor-info">
+                <span class="modal-tutor-name">{{ bookingModalTutor.name }}</span>
+                <span class="modal-tutor-role">{{ formatRoleLabel(bookingModalTutor.role) }} &bull; {{ formatTutorBadge(bookingModalTutor.rating) }}</span>
+              </div>
+              <div class="booking-badge badge-active">
+                <span>{{ formatTutorBadge(bookingModalTutor.rating) }}</span>
+              </div>
+            </div>
+
+            <div class="modal-section-label">Available time slots</div>
+
+            @if (isTutorSlotsLoading(bookingModalTutor.id)) {
+              <div class="modal-helper">Loading available slots...</div>
+            } @else if (getAvailableSlotsByTutor(bookingModalTutor.id).length === 0) {
+              <div class="modal-helper">No available time slots for this tutor.</div>
+            } @else {
+              <div class="modal-slot-list">
+                @for (slot of getAvailableSlotsByTutor(bookingModalTutor.id); track slot.id) {
+                  <div
+                    class="modal-slot-item"
+                    [class.selected]="isSlotSelected(slot.id) || (isSlotPending(slot.id) && !slotsToCancel.has(slot.id))"
+                    [class.pending]="isSlotPending(slot.id) && !slotsToCancel.has(slot.id)"
+                    (click)="toggleSlotSelection(slot.id)">
+                    <div class="modal-slot-checkbox">
+                      @if (isSlotSelected(slot.id) || (isSlotPending(slot.id) && !slotsToCancel.has(slot.id))) {
+                        <mat-icon class="modal-slot-check-icon">check</mat-icon>
+                      }
+                    </div>
+                    <span class="modal-slot-time"
+                      [style.text-decoration]="slotsToCancel.has(slot.id) ? 'line-through' : 'none'"
+                      [style.color]="slotsToCancel.has(slot.id) ? '#9a9ab0' : ''">{{ formatSlotRange(slot.start_at, slot.end_at) }}</span>
+                    @if (isSlotPending(slot.id) && !slotsToCancel.has(slot.id)) {
+                      <span class="modal-slot-pending-label">Pending</span>
+                    }
+                    @if (slotsToCancel.has(slot.id)) {
+                      <span class="modal-slot-pending-label" style="color:#b91c1c;border-color:#fecaca;background:#fef9f9">Will cancel</span>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="modal-summary">
+                @if (getTotalChangeCount() === 0) {
+                  Select one or more time slots to book or untick pending slots to cancel them.
+                } @else if (selectedSlotIds.size > 0 && slotsToCancel.size > 0) {
+                  <strong>{{ selectedSlotIds.size }}</strong> slot{{ selectedSlotIds.size > 1 ? 's' : '' }} to book, <strong>{{ slotsToCancel.size }}</strong> to cancel.
+                } @else if (slotsToCancel.size > 0) {
+                  <strong>{{ slotsToCancel.size }}</strong> pending request{{ slotsToCancel.size > 1 ? 's' : '' }} will be cancelled.
+                } @else {
+                  <strong>{{ selectedSlotIds.size }}</strong> slot{{ selectedSlotIds.size > 1 ? 's' : '' }} selected.
+                }
+              </div>
+            }
+
+            <div class="modal-buttons">
+              <button type="button" class="modal-secondary" [disabled]="actionLoading()" (click)="closeBookingModal()">Cancel</button>
+              <button
+                type="button"
+                class="modal-primary"
+                [disabled]="actionLoading() || getTotalChangeCount() === 0"
+                (click)="submitBulkBooking()">
+                @if (actionLoading()) {
+                  <div class="spinner"></div>
+                } @else {
+                  @if (slotsToCancel.size > 0) {
+                    Save changes
+                  } @else {
+                    Book {{ selectedSlotIds.size }} slot{{ selectedSlotIds.size > 1 ? 's' : '' }}
+                  }
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (studentSlotsModalItem) {
+      <div class="modal-overlay" (click)="closeStudentSlotsModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <div class="modal-inner">
+            <div class="modal-header">
+              <h4>Booked slots</h4>
+              <button type="button" class="modal-close-btn" (click)="closeStudentSlotsModal()" aria-label="Close">
+                <mat-icon style="font-size:18px;width:18px;height:18px;line-height:18px">close</mat-icon>
+              </button>
+            </div>
+
+            <div class="modal-tutor-row">
+              <img [src]="studentSlotsModalItem.student.img || 'default-avatar.jpg'" alt="avatar" class="modal-tutor-avatar">
+              <div class="modal-tutor-info">
+                <span class="modal-tutor-name">{{ studentSlotsModalItem.student.name }}</span>
+                <span class="modal-tutor-role">{{ studentSlotsModalItem.student.email }}</span>
+              </div>
+              <div class="booking-badge" [ngClass]="getStudentBadgeClass(studentSlotsModalItem)">
+                <span>{{ formatStatusLabel(getLatestSlot(studentSlotsModalItem.time_slots)?.booking_status) }}</span>
+              </div>
+            </div>
+
+            <div class="modal-section-label">Time slots ({{ studentSlotsModalItem.time_slots.length }})</div>
+
+            <div class="modal-slot-list">
+              @for (slot of studentSlotsModalItem.time_slots; track trackSlot($index, slot)) {
+                <div
+                  class="modal-slot-item"
+                  [class.selected]="slot.booking_status === 'pending' && isTutorSlotSelected(slot.booking_id)"
+                  [style.cursor]="slot.booking_status === 'pending' ? 'pointer' : 'default'"
+                  (click)="slot.booking_status === 'pending' ? toggleTutorSlotSelection(slot.booking_id) : null">
+                  <div class="modal-slot-checkbox"
+                    [style.border-color]="slot.booking_status === 'pending' ? (isTutorSlotSelected(slot.booking_id) ? '#6b46c1' : '#c4b5fd') : (slot.booking_status === 'confirmed' || slot.booking_status === 'booked' ? '#6b46c1' : '#d1d5db')"
+                    [style.background]="(slot.booking_status === 'pending' && isTutorSlotSelected(slot.booking_id)) || slot.booking_status === 'confirmed' || slot.booking_status === 'booked' ? '#6b46c1' : '#fff'">
+                    @if ((slot.booking_status === 'pending' && isTutorSlotSelected(slot.booking_id)) || slot.booking_status === 'confirmed' || slot.booking_status === 'booked') {
+                      <mat-icon class="modal-slot-check-icon">check</mat-icon>
+                    }
+                  </div>
+                  <div style="flex:1; display:flex; flex-direction:column; gap:2px; min-width:0">
+                    <span class="modal-slot-time">{{ formatDateTime(slot.start_at) }}</span>
+                    <span class="slot-status" [ngClass]="getSlotStatusClass(slot.booking_status)" style="font-size:9px">{{ formatStatusLabel(slot.booking_status) }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="modal-summary">
+              @if (getSelectedTutorSlotCount() === 0) {
+                Select pending slots to confirm or reject.
+              } @else {
+                <strong>{{ getSelectedTutorSlotCount() }}</strong> slot{{ getSelectedTutorSlotCount() > 1 ? 's' : '' }} selected.
+              }
+            </div>
+
+            <div class="modal-buttons">
+              <button type="button" class="modal-secondary" [disabled]="actionLoading()" (click)="closeStudentSlotsModal()">Close</button>
+              <button type="button" class="modal-reject" [disabled]="actionLoading() || getSelectedTutorSlotCount() === 0" (click)="submitBulkTutorAction('reject')">
+                @if (actionLoading()) { <div class="spinner"></div> } @else { Reject }
+              </button>
+              <button type="button" class="modal-primary" [disabled]="actionLoading() || getSelectedTutorSlotCount() === 0" (click)="submitBulkTutorAction('confirm')">
+                @if (actionLoading()) { <div class="spinner"></div> } @else { Confirm }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `, 
 })
 export class Booking implements OnInit{
@@ -474,24 +620,34 @@ export class Booking implements OnInit{
   newSlotStartAt = '';
   newSlotEndAt = '';
   private pendingSlotBookingIds: Record<number, number> = {};
+  slotsToCancel = new Set<number>();
+  bookingModalTutor: Teacher | null = null;
+  selectedSlotIds = new Set<number>();
+  studentSlotsModalItem: TutorBookedStudent | null = null;
+  selectedTutorBookingIds = new Set<number>();
 
   ngOnInit(): void {
+    // Load booking data for the current user role on page init
     this.bookingStore.loadBookingData();
   }
 
   isStudentRole(): boolean {
+    // Check if the current user is a student
     return this.user().role === 'student';
   }
 
   isTutorRole(): boolean {
+    // Check if the current user is a tutor
     return this.user().role === 'tutor';
   }
 
   onSearchChange(value: string) {
+    // Update the search term (trimmed, lowercase) for filtering
     this.searchValue = value.trim().toLowerCase();
   }
 
   getFilteredTutors(): Teacher[] {
+    // Filter the tutor list by search text, role, and rating
     return this.tutors().filter((tutor) => {
       const matchesSearch = !this.searchValue || [tutor.name, tutor.email, tutor.phone, tutor.bio]
         .filter(Boolean)
@@ -504,6 +660,7 @@ export class Booking implements OnInit{
   }
 
   getFilteredBookedStudents(): TutorBookedStudent[] {
+    // Filter booked-student records by search text, slot status and slot date; also filter each student's slot list
     return this.bookedStudents().filter((item) => {
       const matchesSearch = !this.searchValue || [item.student.name, item.student.email, item.student.phone]
         .filter(Boolean)
@@ -513,17 +670,20 @@ export class Booking implements OnInit{
       return matchesSearch && matchingSlots.length > 0;
     }).map((item) => ({
       ...item,
+      // Replace the full slot list with only the slots that passed the filters
       time_slots: item.time_slots.filter((slot) => this.matchesSlotStatus(slot) && this.matchesSlotDate(slot)),
     }));
   }
 
   getStudentBadgeClass(item: TutorBookedStudent): string {
+    // Use the latest slot's booking status to determine the badge color
     const latestSlot = this.getLatestSlot(item.time_slots);
     const status = latestSlot?.booking_status || 'pending';
     return this.getStatusBadgeClass(status);
   }
 
   getStatusBadgeClass(status?: string): string {
+    // Map a booking status to its CSS badge class
     switch (status) {
       case 'confirmed':
       case 'booked':
@@ -538,6 +698,7 @@ export class Booking implements OnInit{
   }
 
   getButtonClass(status?: string): string {
+    // Map a booking status to its CSS button class
     switch (status) {
       case 'confirmed':
       case 'booked':
@@ -552,6 +713,7 @@ export class Booking implements OnInit{
   }
 
   getSlotStatusClass(status?: string): string {
+    // Map a slot booking status to its inline CSS class for the status label
     switch (status) {
       case 'confirmed':
       case 'booked':
@@ -566,10 +728,12 @@ export class Booking implements OnInit{
   }
 
   getLatestSlot(timeSlots: BookedTimeSlot[]): BookedTimeSlot | undefined {
+    // Return the most recently scheduled slot (sorted by descending start time)
     return [...timeSlots].sort((left, right) => new Date(right.start_at).getTime() - new Date(left.start_at).getTime())[0];
   }
 
   getNextSlot(timeSlots: BookedTimeSlot[]): BookedTimeSlot | undefined {
+    // Return the nearest upcoming slot (start time >= now, sorted ascending)
     const now = Date.now();
     return [...timeSlots]
       .filter((slot) => new Date(slot.start_at).getTime() >= now)
@@ -607,6 +771,7 @@ export class Booking implements OnInit{
   }
 
   formatStatusLabel(status?: string): string {
+    // Capitalize the status string for display; fallback to 'Completed' for missing status
     if (!status) {
       return 'Completed';
     }
@@ -615,6 +780,7 @@ export class Booking implements OnInit{
   }
 
   getSlotSummary(item: TutorBookedStudent): string {
+    // Show the next upcoming slot if available; otherwise fall back to the most recent past slot
     const nextSlot = this.getNextSlot(item.time_slots);
     if (nextSlot) {
       return this.formatDateTime(nextSlot.start_at);
@@ -637,6 +803,7 @@ export class Booking implements OnInit{
   }
 
   toggleTutorDetails(tutorId: number): void {
+    // Collapse the panel if already open; otherwise open it and refresh available slots
     if (this.expandedTutorId === tutorId) {
       this.expandedTutorId = null;
       return;
@@ -647,18 +814,22 @@ export class Booking implements OnInit{
   }
 
   isTutorExpanded(tutorId: number): boolean {
+    // Check whether this tutor's details panel is currently open
     return this.expandedTutorId === tutorId;
   }
 
   isTutorSlotsLoading(tutorId: number): boolean {
+    // Check whether slots for this tutor are still being fetched
     return !!this.slotsLoadingByTutor()[tutorId];
   }
 
   getAvailableSlotsByTutor(tutorId: number): TimeSlot[] {
+    // Return the cached available slots for a tutor (empty array if not loaded yet)
     return this.availableSlotsByTutor()[tutorId] || [];
   }
 
   toggleSlotBooking(teacherId: number, timeSlotId: number): void {
+    // Toggle: cancel the pending request if one exists, otherwise create a new one
     if (this.isSlotPending(timeSlotId)) {
       this.cancelPendingBooking(teacherId, timeSlotId);
       return;
@@ -668,37 +839,44 @@ export class Booking implements OnInit{
   }
 
   isSlotPending(slotId: number): boolean {
+    // True when a pending booking request has been sent for this slot
     return !!this.pendingSlotBookingIds[slotId];
   }
 
   confirmBooking(bookingId: number, timeSlotId: number, event?: Event): void {
+    // Prevent event bubbling, close the action panel, then confirm the booking
     event?.stopPropagation();
     this.activeTutorPendingBookingId = null;
     this.confirmBookingRequest(bookingId, timeSlotId);
   }
 
   rejectBooking(bookingId: number, event?: Event): void {
+    // Prevent event bubbling, close the action panel, then reject the booking
     event?.stopPropagation();
     this.activeTutorPendingBookingId = null;
     this.rejectBookingRequest(bookingId);
   }
 
   toggleTutorPendingActions(slot: BookedTimeSlot): void {
+    // Only pending slots have inline confirm/reject actions; ignore others
     if (slot.booking_status !== 'pending') {
       this.activeTutorPendingBookingId = null;
       return;
     }
 
+    // Toggle the action row for this slot
     this.activeTutorPendingBookingId = this.activeTutorPendingBookingId === slot.booking_id
       ? null
       : slot.booking_id;
   }
 
   isTutorPendingActionOpen(slot: BookedTimeSlot): boolean {
+    // Check whether the inline action row is currently visible for this slot
     return this.activeTutorPendingBookingId === slot.booking_id;
   }
 
   toggleBookedSlots(studentId: number): void {
+    // Expand or collapse a student's booked slot list; clear pending action on collapse
     const isExpanded = this.expandedBookedStudentId === studentId;
     this.expandedBookedStudentId = isExpanded ? null : studentId;
     if (isExpanded) {
@@ -707,14 +885,241 @@ export class Booking implements OnInit{
   }
 
   isBookedSlotsExpanded(studentId: number): boolean {
+    // Check whether this student's booked slot list is currently visible
     return this.expandedBookedStudentId === studentId;
   }
 
+  openBookingModal(tutor: Teacher): void {
+    this.bookingModalTutor = tutor;
+    this.selectedSlotIds = new Set<number>();
+    this.slotsToCancel = new Set<number>();
+    // Pre-populate pendingSlotBookingIds from backend so pending state survives page reloads
+    this.bookingsService.bookingsList().subscribe({
+      next: (bookings) => {
+        bookings
+          .filter((b) => b.teacher?.id === tutor.id && b.status === BookingStatusEnum.Pending)
+          .forEach((b) => {
+            if (b.time_slot?.id && b.id) {
+              this.pendingSlotBookingIds[b.time_slot.id] = b.id;
+            }
+          });
+      },
+    });
+    this.bookingStore.loadAvailableSlotsByTutor(tutor.id, true);
+  }
+
+  openStudentSlotsModal(item: TutorBookedStudent): void {
+    this.studentSlotsModalItem = item;
+    this.selectedTutorBookingIds = new Set<number>();
+    this.activeTutorPendingBookingId = null;
+  }
+
+  closeStudentSlotsModal(): void {
+    if (this.actionLoading()) return;
+    this.studentSlotsModalItem = null;
+    this.selectedTutorBookingIds = new Set<number>();
+    this.activeTutorPendingBookingId = null;
+  }
+
+  toggleTutorSlotSelection(bookingId: number): void {
+    const next = new Set(this.selectedTutorBookingIds);
+    if (next.has(bookingId)) {
+      next.delete(bookingId);
+    } else {
+      next.add(bookingId);
+    }
+    this.selectedTutorBookingIds = next;
+  }
+
+  isTutorSlotSelected(bookingId: number): boolean {
+    return this.selectedTutorBookingIds.has(bookingId);
+  }
+
+  getSelectedTutorSlotCount(): number {
+    return this.selectedTutorBookingIds.size;
+  }
+
+  submitBulkTutorAction(action: 'confirm' | 'reject'): void {
+    if (!this.studentSlotsModalItem || this.selectedTutorBookingIds.size === 0) return;
+    const bookingIds = Array.from(this.selectedTutorBookingIds);
+    this.actionLoading.set(true);
+    this.clearMessages();
+
+    if (action === 'reject') {
+      const requests = bookingIds.map((id) =>
+        this.bookingsService.bookingsPartialUpdate(id, { status: BookingStatusEnum.Cancelled }),
+      );
+      forkJoin(requests).subscribe({
+        next: () => {
+          this.setSuccessMessage(`${bookingIds.length} booking${bookingIds.length > 1 ? 's' : ''} rejected.`);
+          this.actionLoading.set(false);
+          this.selectedTutorBookingIds = new Set<number>();
+          this.studentSlotsModalItem = null;
+          this.bookingStore.loadBookingData();
+        },
+        error: (err: any) => {
+          this.setErrorMessage('Failed to reject bookings: ' + err.message);
+          this.actionLoading.set(false);
+        },
+      });
+    } else {
+      const requests = bookingIds.map((id) =>
+        this.bookingsService.bookingsConfirmCreate(id).pipe(
+          switchMap((booking) => this.ensureRoomForConfirmedBooking(booking)),
+        ),
+      );
+      forkJoin(requests).subscribe({
+        next: () => {
+          this.setSuccessMessage(`${bookingIds.length} booking${bookingIds.length > 1 ? 's' : ''} confirmed.`);
+          this.actionLoading.set(false);
+          this.selectedTutorBookingIds = new Set<number>();
+          this.studentSlotsModalItem = null;
+          this.bookingStore.loadBookingData();
+        },
+        error: (err: any) => {
+          this.setErrorMessage('Failed to confirm bookings: ' + err.message);
+          this.actionLoading.set(false);
+        },
+      });
+    }
+  }
+
+  confirmBookingInModal(bookingId: number, timeSlotId: number, event?: Event): void {
+    event?.stopPropagation();
+    this.activeTutorPendingBookingId = null;
+    // Optimistically update the slot status in the modal item so UI reflects immediately
+    if (this.studentSlotsModalItem) {
+      this.studentSlotsModalItem = {
+        ...this.studentSlotsModalItem,
+        time_slots: this.studentSlotsModalItem.time_slots.map((s) =>
+          s.booking_id === bookingId ? { ...s, booking_status: 'confirmed' } : s,
+        ),
+      };
+    }
+    this.confirmBookingRequest(bookingId, timeSlotId);
+  }
+
+  closeBookingModal(): void {
+    if (this.actionLoading()) return;
+    this.bookingModalTutor = null;
+    this.selectedSlotIds = new Set<number>();
+    this.slotsToCancel = new Set<number>();
+  }
+
+  toggleSlotSelection(slotId: number): void {
+    if (this.isSlotPending(slotId)) {
+      const next = new Set(this.slotsToCancel);
+      if (next.has(slotId)) { next.delete(slotId); } else { next.add(slotId); }
+      this.slotsToCancel = next;
+      return;
+    }
+    const next = new Set(this.selectedSlotIds);
+    if (next.has(slotId)) {
+      next.delete(slotId);
+    } else {
+      next.add(slotId);
+    }
+    this.selectedSlotIds = next;
+  }
+
+  cancelPendingBookingFromModal(slotId: number): void {
+    const tutor = this.bookingModalTutor;
+    if (!tutor) return;
+    const bookingId = this.pendingSlotBookingIds[slotId];
+    if (!bookingId) return;
+    this.actionLoading.set(true);
+    this.clearMessages();
+    this.bookingsService.bookingsDestroy(bookingId).subscribe({
+      next: () => {
+        delete this.pendingSlotBookingIds[slotId];
+        this.slotsToCancel = new Set(Array.from(this.slotsToCancel).filter(id => id !== slotId));
+        this.setSuccessMessage('Booking request cancelled.');
+        this.bookingStore.loadAvailableSlotsByTutor(tutor.id, true);
+        this.actionLoading.set(false);
+      },
+      error: (err: any) => {
+        this.setErrorMessage('Failed to cancel booking request: ' + err.message);
+        this.actionLoading.set(false);
+      },
+    });
+  }
+
+  getTotalChangeCount(): number {
+    return this.selectedSlotIds.size + this.slotsToCancel.size;
+  }
+
+  isSlotSelected(slotId: number): boolean {
+    return this.selectedSlotIds.has(slotId);
+  }
+
+  getSelectedSlotCount(): number {
+    return this.selectedSlotIds.size;
+  }
+
+  submitBulkBooking(): void {
+    const tutor = this.bookingModalTutor;
+    const currentUser = this.user();
+    if (!tutor || !currentUser?.id || currentUser.role !== 'student') return;
+
+    if (this.getTotalChangeCount() === 0) return;
+
+    this.actionLoading.set(true);
+    this.clearMessages();
+
+    const cancelSlotIds = Array.from(this.slotsToCancel);
+    const newSlotIds = Array.from(this.selectedSlotIds);
+
+    const cancelRequests = cancelSlotIds.map((slotId) => {
+      const bookingId = this.pendingSlotBookingIds[slotId];
+      return this.bookingsService.bookingsDestroy(bookingId).pipe(
+        map(() => ({ type: 'cancel' as const, slotId })),
+      );
+    });
+
+    const bookRequests = newSlotIds.map((timeSlotId) =>
+      this.bookingsService.bookingsCreate({
+        teacher: tutor.id,
+        time_slot: timeSlotId,
+        student: currentUser.id,
+        status: BookingStatusEnum.Pending,
+      } as unknown as BookingPayload).pipe(
+        map((createdBooking) => ({ type: 'book' as const, timeSlotId, bookingId: createdBooking?.id })),
+      ),
+    );
+
+    forkJoin([...cancelRequests, ...bookRequests]).subscribe({
+      next: (results) => {
+        results.forEach((r) => {
+          if (r.type === 'cancel') {
+            delete this.pendingSlotBookingIds[r.slotId];
+          } else if (r.bookingId) {
+            this.pendingSlotBookingIds[r.timeSlotId] = r.bookingId;
+          }
+        });
+        const booked = results.filter(r => r.type === 'book').length;
+        const cancelled = results.filter(r => r.type === 'cancel').length;
+        const parts: string[] = [];
+        if (booked > 0) parts.push(`${booked} request${booked > 1 ? 's' : ''} sent`);
+        if (cancelled > 0) parts.push(`${cancelled} request${cancelled > 1 ? 's' : ''} cancelled`);
+        this.setSuccessMessage(parts.join(', ') + '.');
+        this.bookingStore.loadAvailableSlotsByTutor(tutor.id, true);
+        this.actionLoading.set(false);
+        this.closeBookingModal();
+      },
+      error: (err) => {
+        this.setErrorMessage('Failed to apply booking changes: ' + err.message);
+        this.actionLoading.set(false);
+      },
+    });
+  }
+
   openCreateSlotForm(): void {
+    // Show the create-slot modal
     this.showCreateSlotForm = true;
   }
 
   closeCreateSlotForm(): void {
+    // Block close while an action is in progress; otherwise hide and reset form fields
     if (this.actionLoading()) {
       return;
     }
@@ -725,14 +1130,17 @@ export class Booking implements OnInit{
   }
 
   get minStartAt(): string {
+    // The earliest allowed start time is the current moment
     return this.toDateTimeLocalValue(new Date());
   }
 
   get minEndAt(): string {
+    // End time must be at or after the chosen start time (or current time if start not set)
     return this.newSlotStartAt || this.minStartAt;
   }
 
   get isSlotRangeInvalid(): boolean {
+    // Validation: end must be strictly after start
     if (!this.newSlotStartAt || !this.newSlotEndAt) {
       return false;
     }
@@ -741,6 +1149,7 @@ export class Booking implements OnInit{
   }
 
   get slotDurationText(): string {
+    // Compute a human-readable duration string (e.g., '1h 30m') from the selected range
     if (!this.newSlotStartAt || !this.newSlotEndAt || this.isSlotRangeInvalid) {
       return '';
     }
@@ -762,6 +1171,7 @@ export class Booking implements OnInit{
   }
 
   setEndByDuration(minutes: number): void {
+    // Calculate an end time by adding `minutes` to the current start time (or now if unset)
     const baseStart = this.newSlotStartAt ? new Date(this.newSlotStartAt) : new Date();
     if (!this.newSlotStartAt) {
       this.newSlotStartAt = this.toDateTimeLocalValue(baseStart);
@@ -772,6 +1182,7 @@ export class Booking implements OnInit{
   }
 
   submitCreateSlot(): void {
+    // Submit the slot creation form and close the modal on success
     this.createTutorTimeSlot(() => {
       this.closeCreateSlotForm();
     });
@@ -779,6 +1190,7 @@ export class Booking implements OnInit{
 
   private createPendingBooking(teacherId: number, timeSlotId: number): void {
     const currentUser = this.user();
+    // Guard: only authenticated students can create a booking request
     if (!currentUser?.id || currentUser.role !== 'student') {
       this.setErrorMessage('Only students can create booking requests.');
       return;
@@ -796,9 +1208,11 @@ export class Booking implements OnInit{
       next: (createdBooking) => {
         const bookingId = createdBooking?.id;
         if (bookingId) {
+          // Track the booking ID locally so we can cancel it later
           this.pendingSlotBookingIds[timeSlotId] = bookingId;
         }
         this.setSuccessMessage('Booking request sent, waiting for tutor confirmation.');
+        // Reload slots for this tutor to reflect the now-taken slot
         this.bookingStore.loadAvailableSlotsByTutor(teacherId, true);
         this.actionLoading.set(false);
       },
@@ -811,6 +1225,7 @@ export class Booking implements OnInit{
 
   private cancelPendingBooking(teacherId: number, timeSlotId: number): void {
     const currentUser = this.user();
+    // Guard: only the student who created the request can cancel it
     if (!currentUser?.id || currentUser.role !== 'student') {
       this.setErrorMessage('Only students can cancel booking requests.');
       return;
@@ -827,6 +1242,7 @@ export class Booking implements OnInit{
 
     this.bookingsService.bookingsDestroy(bookingId).subscribe({
       next: () => {
+        // Remove the local tracking entry so the slot appears available again
         delete this.pendingSlotBookingIds[timeSlotId];
         this.setSuccessMessage('Pending booking request cancelled.');
         this.bookingStore.loadAvailableSlotsByTutor(teacherId, true);
@@ -840,6 +1256,7 @@ export class Booking implements OnInit{
   }
 
   private confirmBookingRequest(bookingId: number, _timeSlotId: number): void {
+    // Guard: only tutors can confirm bookings
     if (this.user().role !== 'tutor') {
       this.setErrorMessage('Only tutors can confirm bookings.');
       return;
@@ -848,6 +1265,7 @@ export class Booking implements OnInit{
     this.actionLoading.set(true);
     this.clearMessages();
 
+    // Confirm the booking then ensure a WebRTC room exists for the resulting session
     this.bookingsService.bookingsConfirmCreate(bookingId).pipe(
       switchMap((booking) => this.ensureRoomForConfirmedBooking(booking)),
     ).subscribe({
@@ -871,8 +1289,10 @@ export class Booking implements OnInit{
         }
 
         return this.roomsService.roomsBySessionRetrieve(session.id).pipe(
+          // Room already exists — continue
           map(() => session),
           catchError((error) => {
+            // Only create a new room if the existing one was not found (404)
             if (error?.status !== 404) {
               throw error;
             }
@@ -898,6 +1318,7 @@ export class Booking implements OnInit{
 
     return this.sessionsService.sessionsByTutorList(tutorId).pipe(
       map((sessions) => {
+        // Prefer an exact match on student + time slot
         const matchedSession = sessions.find((session) =>
           session.student?.id === studentId && session.time_slot?.id === timeSlotId,
         );
@@ -906,6 +1327,7 @@ export class Booking implements OnInit{
           return matchedSession;
         }
 
+        // Fall back to the latest session for this student with the tutor
         return [...sessions]
           .filter((session) => session.student?.id === studentId)
           .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())[0] ?? null;
@@ -915,6 +1337,7 @@ export class Booking implements OnInit{
   }
 
   private fetchSessionByStudentFallback(studentId: number, tutorId: number, timeSlotId: number) {
+    // Secondary lookup: search from the student's side when tutor-side search failed
     return this.sessionsService.sessionsByStudentList(studentId).pipe(
       map((sessions) => {
         const matchedSession = sessions.find((session) =>
@@ -931,6 +1354,7 @@ export class Booking implements OnInit{
   }
 
   private buildRoomCode(tutorName?: string): string {
+    // Slugify the tutor's name and append a 6-character random suffix
     const normalizedTutorName = (tutorName ?? 'tutor')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -947,6 +1371,7 @@ export class Booking implements OnInit{
   }
 
   private rejectBookingRequest(bookingId: number): void {
+    // Guard: only tutors can reject bookings
     if (this.user().role !== 'tutor') {
       this.setErrorMessage('Only tutors can reject bookings.');
       return;
@@ -955,6 +1380,7 @@ export class Booking implements OnInit{
     this.actionLoading.set(true);
     this.clearMessages();
 
+    // Set the booking status to CANCELLED via a partial update
     this.bookingsService.bookingsPartialUpdate(bookingId, {
       status: BookingStatusEnum.Cancelled,
     }).subscribe({
@@ -972,6 +1398,7 @@ export class Booking implements OnInit{
 
   private createTutorTimeSlot(onSuccess?: () => void): void {
     const currentUser = this.user();
+    // Guard: only authenticated tutors may create time slots
     if (!currentUser?.id || currentUser.role !== 'tutor') {
       this.setErrorMessage('Only tutors can create time slots.');
       return;
@@ -982,6 +1409,7 @@ export class Booking implements OnInit{
       return;
     }
 
+    // Validate that end time is strictly after start time
     const startTime = new Date(this.newSlotStartAt).getTime();
     const endTime = new Date(this.newSlotEndAt).getTime();
     if (Number.isNaN(startTime) || Number.isNaN(endTime) || endTime <= startTime) {
@@ -992,6 +1420,7 @@ export class Booking implements OnInit{
     this.actionLoading.set(true);
     this.clearMessages();
 
+    // Convert local datetime-local strings to ISO 8601 before sending to the API
     this.timeSlotsApi.timeSlotsCreate({
       teacher: currentUser.id,
       start_at: new Date(this.newSlotStartAt).toISOString(),
@@ -1022,6 +1451,7 @@ export class Booking implements OnInit{
   }
 
   private toDateTimeLocalValue(date: Date): string {
+    // Convert a Date to the YYYY-MM-DDTHH:MM format required by <input type="datetime-local">
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -1035,6 +1465,7 @@ export class Booking implements OnInit{
   }
 
   private matchesRating(rating?: string | null, filter?: string): boolean {
+    // Numeric comparison to determine if a tutor's rating satisfies the selected filter
     const numericRating = Number(rating || 0);
 
     switch (filter) {
@@ -1050,10 +1481,12 @@ export class Booking implements OnInit{
   }
 
   private matchesSlotStatus(slot: BookedTimeSlot): boolean {
+    // Match a slot against the active status filter
     return this.filterStatus === 'all' || slot.booking_status === this.filterStatus;
   }
 
   private matchesSlotDate(slot: BookedTimeSlot): boolean {
+    // Match a slot against the active date-range filter
     if (this.filterDate === 'all') {
       return true;
     }
@@ -1066,6 +1499,7 @@ export class Booking implements OnInit{
     }
 
     if (this.filterDate === 'this-week') {
+      // Compute Sunday-to-Saturday week boundaries
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - now.getDay());
       startOfWeek.setHours(0, 0, 0, 0);

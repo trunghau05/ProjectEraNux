@@ -7,6 +7,7 @@ api/bookings.service.ts
 api/classes.service.ts
 api/login.service.ts
 api/media.service.ts
+api/notifications.service.ts
 api/rooms.service.ts
 api/schedules.service.ts
 api/sessions.service.ts
@@ -30,9 +31,13 @@ model/classStatusEnum.ts
 model/dayOfWeekEnum.ts
 model/login.ts
 model/models.ts
+model/notification.ts
+model/notificationRoleEnum.ts
+model/notificationsMarkAllReadCreate200Response.ts
 model/paginatedClassDetailList.ts
 model/patchedBooking.ts
 model/patchedClass.ts
+model/patchedNotification.ts
 model/patchedRoom.ts
 model/patchedSchedule.ts
 model/patchedSession.ts

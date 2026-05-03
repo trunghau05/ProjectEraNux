@@ -11,14 +11,19 @@ import { CommonModule } from '@angular/common';
 })
 export class Navbar {
   private router = inject(Router);
-  activeRoute: string = 'dashboard';
 
   navigateTo(route: string): void {
-    this.activeRoute = route;
     this.router.navigate([route]);
   }
 
   isActive(route: string): boolean {
-    return this.activeRoute === route;
+    const currentUrl = this.router.url.split('?')[0].split('#')[0];
+    const target = `/${route}`;
+
+    if (route === 'dashboard') {
+      return currentUrl === '/' || currentUrl === '/dashboard' || currentUrl.startsWith('/dashboard/');
+    }
+
+    return currentUrl === target || currentUrl.startsWith(`${target}/`);
   }
 }

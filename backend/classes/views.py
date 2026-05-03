@@ -61,10 +61,12 @@ class ClassViewSet(ModelViewSet):
         return ClassSerializer
 
     def _get_first_occurrence_date(self, start_date, day_of_week):
+        # Rewind start_date to the Monday of its week, then jump forward by day_of_week
         week_monday = start_date - timedelta(days=start_date.weekday())
         return week_monday + timedelta(days=day_of_week)
 
     def _combine_schedule_datetime(self, date_value, time_value):
+        # Merge a date and a time into a timezone-aware datetime
         naive_datetime = datetime.combine(date_value, time_value)
         if timezone.is_naive(naive_datetime):
             return timezone.make_aware(naive_datetime, timezone.get_current_timezone())
@@ -96,6 +98,7 @@ class ClassViewSet(ModelViewSet):
 
         # filter theo student (qua bảng in_class)
         if student_id:
+            # Sub-select class IDs from the enrollment table
             queryset = queryset.filter(
                 id__in=InClass.objects.filter(
                     student_id=student_id
@@ -199,6 +202,7 @@ class ClassViewSet(ModelViewSet):
         student_id = serializer.validated_data['student_id']
 
         with transaction.atomic():
+            # Lock the class row to prevent concurrent registrations exceeding max_students
             class_obj = get_object_or_404(
                 Class.objects.select_for_update().select_related('teacher'),
                 pk=pk
@@ -217,6 +221,7 @@ class ClassViewSet(ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            # Re-count inside the transaction to avoid a race condition
             enrolled_students = InClass.objects.select_for_update().filter(class_obj=class_obj).count()
             projected_students = enrolled_students + 1
 
@@ -228,6 +233,7 @@ class ClassViewSet(ModelViewSet):
 
             InClass.objects.create(class_obj=class_obj, student=student)
 
+            # Flip the class status to FULL when the last seat is taken
             if projected_students == class_obj.max_students:
                 class_obj.status = Class.FULL
                 class_obj.save(update_fields=['status'])
@@ -246,11 +252,13 @@ class ClassViewSet(ModelViewSet):
                     schedule.day_of_week,
                 )
 
+                # Generate one Session per scheduled week according to the repeat count
                 for week_offset in range(schedule.repeat):
                     occurrence_date = first_occurrence_date + timedelta(days=week_offset * 7)
                     start_at = self._combine_schedule_datetime(occurrence_date, schedule.start_time)
                     end_at = self._combine_schedule_datetime(occurrence_date, schedule.end_time)
 
+                    # Reuse an existing session for the same class/teacher/time to avoid duplicates
                     session_obj, created = Session.objects.get_or_create(
                         class_obj=class_obj,
                         teacher=class_obj.teacher,

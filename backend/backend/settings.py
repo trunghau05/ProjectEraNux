@@ -86,7 +86,7 @@ INSTALLED_APPS = [
     'schedules',
     'class_sessions',
     'rooms',
-    
+    'notifications',
 ]
 
 MIDDLEWARE = [

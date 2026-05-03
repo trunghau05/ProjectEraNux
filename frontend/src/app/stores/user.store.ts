@@ -18,11 +18,13 @@ export class UserStore {
   readonly errorMessage = signal<string | null>(null);
 
   readonly normalizedRole = computed(() => {
+    // Capitalize the first letter of the role string (e.g., 'student' → 'Student')
     const role = this.user().role || '';
     return role ? role.charAt(0).toUpperCase() + role.slice(1) : '';
   });
 
   readonly avatarUrl = computed(() => {
+    // Return the user's profile image URL; fall back to a default avatar if not set
     const role = this.user().role;
     if (role === 'student') {
       return this.student().img || 'default-avatar.jpg';
@@ -32,9 +34,11 @@ export class UserStore {
   });
 
   loadUserInfo(): void {
+    // Reload user from session storage to ensure we have the latest credentials
     this.userService.loadUser();
     const currentUser = this.user();
 
+    // Guard: reset profile data if user is unauthenticated
     if (!currentUser?.id || !currentUser?.role) {
       this.userName.set('');
       this.student.set({} as Student);
@@ -46,10 +50,11 @@ export class UserStore {
     this.errorMessage.set(null);
 
     if (currentUser.role === 'student') {
+      // Fetch the student profile record from the API
       this.studentsService.studentsRetrieve(currentUser.id).subscribe({
         next: (res) => {
           this.student.set(res);
-          this.teacher.set({} as Teacher);
+          this.teacher.set({} as Teacher); // clear teacher data for students
           this.userName.set(res.name || '');
           this.isLoading.set(false);
         },
@@ -62,10 +67,11 @@ export class UserStore {
     }
 
     if (currentUser.role === 'teacher' || currentUser.role === 'tutor') {
+      // Both teacher and tutor roles use the same teacher record API
       this.teachersService.teachersRetrieve(currentUser.id).subscribe({
         next: (res) => {
           this.teacher.set(res);
-          this.student.set({} as Student);
+          this.student.set({} as Student); // clear student data for teachers/tutors
           this.userName.set(res.name || '');
           this.isLoading.set(false);
         },
@@ -77,6 +83,7 @@ export class UserStore {
       return;
     }
 
+    // Unknown role — clear the username and stop loading
     this.userName.set('');
     this.isLoading.set(false);
   }

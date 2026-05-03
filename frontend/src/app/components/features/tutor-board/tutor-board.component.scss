@@ -25,6 +25,31 @@
 	font-size: 15px;
 }
 
+.navigate-btn {
+	display: inline-flex;
+	align-items: center;
+	height: 28px;
+	padding: 0 10px;
+	border: 1px solid #e7e5f4;
+	border-radius: 8px;
+	background: #faf9ff;
+	color: #5a3fc0;
+	cursor: pointer;
+	transition: all 0.2s ease;
+
+	mat-icon {
+		width: 14px;
+		height: 14px;
+		font-size: 14px;
+		line-height: 14px;
+	}
+
+	&:hover {
+		border-color: #d7cff5;
+		background: #f4f0ff;
+	}
+}
+
 .class-item {
 	padding: 20px 0;
 	border-bottom: 1px solid #f1f1f1;
@@ -45,8 +70,10 @@
 	padding-bottom: 0;
 }
 
-mat-progress-bar {
-	background-color: #e9e9e9ff;
-	color: #bb295fff;
-	border-radius: 5px;
+.empty-week-note {
+	width: 100%;
+	text-align: center;
+	padding: 20px 10px;
+	font-size: 11px;
+	color: #8a8a8a;
 }

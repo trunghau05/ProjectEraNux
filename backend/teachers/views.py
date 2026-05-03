@@ -29,6 +29,7 @@ class TeacherViewSet(ModelViewSet):
         """
         Get list of tutors only
         """
+        # Filter to only teachers that have the TUTOR role
         tutors = Teacher.objects.filter(role=Teacher.TUTOR)
         serializer = self.get_serializer(tutors, many=True)
         return Response(serializer.data)

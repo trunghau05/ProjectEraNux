@@ -50,6 +50,7 @@ class AuthViewSet(ViewSet):
             # Check if it's a password error or email error
             if isinstance(error_detail, dict):
                 if 'password' in error_detail:
+                    # Wrong password — return 401 so the client can show a specific message
                     return Response(
                         {
                             'error': error_detail.get('password'),
@@ -59,6 +60,7 @@ class AuthViewSet(ViewSet):
                         status=status.HTTP_401_UNAUTHORIZED
                     )
                 elif 'email' in error_detail:
+                    # Email not registered — return 404 to distinguish from wrong password
                     return Response(
                         {
                             'error': error_detail.get('email'),
@@ -99,6 +101,7 @@ class UploadRecordingView(APIView):
         room_id = request.data.get('roomId', 'unknown-room')
         user_id = request.data.get('userId', 'anonymous')
 
+        # Validate that a video file was included in the multipart request
         if not video_file:
             return Response(
                 {
@@ -108,6 +111,7 @@ class UploadRecordingView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Load Cloudinary credentials from Django settings first, then env vars
         cloud_name = getattr(settings, 'CLOUDINARY_CLOUD_NAME', None) or os.getenv('CLOUDINARY_CLOUD_NAME')
         api_key = getattr(settings, 'CLOUDINARY_API_KEY', None) or os.getenv('CLOUDINARY_API_KEY')
         api_secret = getattr(settings, 'CLOUDINARY_API_SECRET', None) or os.getenv('CLOUDINARY_API_SECRET')
@@ -140,6 +144,7 @@ class UploadRecordingView(APIView):
             secure=True,
         )
 
+        # Build a deterministic public_id path to avoid collisions between rooms/users
         public_id = f"video-call/{room_id}/{user_id}-{video_file.name.rsplit('.', 1)[0]}"
 
         try:
@@ -170,10 +175,11 @@ class UploadRecordingView(APIView):
                     audio_url = audio_result.get('secure_url')
                 except Exception as audio_exc:
                     print(f"Failed to upload audio: {str(audio_exc)}")
-                    # Continue even if audio upload fails
+                    # Audio failure is non-fatal; continue with the video-only response
 
             session_id = None
             if room_id:
+                # Attach the recording URLs to the associated session via the room code
                 room = Room.objects.select_related('session').filter(room_code=room_id).first()
                 if room and room.session:
                     room.session.recording_url = secure_url

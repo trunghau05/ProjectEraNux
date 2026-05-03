@@ -27,6 +27,7 @@ export class ClassListStore {
   readonly classEnrollmentCounts = signal<Record<number, number>>({});
 
   private buildEnrollmentMap(classList: ClassDetail[]): Record<number, number> {
+    // Build a lookup map of { classId -> enrolled student count } for quick access in the template
     return classList.reduce<Record<number, number>>((acc, classItem) => {
       acc[classItem.id] = classItem.enrolled_students ?? 0;
       return acc;
@@ -34,9 +35,11 @@ export class ClassListStore {
   }
 
   loadClassList(pageSize: number = this.defaultPageSize): void {
+    // Reload user from session storage to pick up any role changes
     this.userService.loadUser();
     const currentUser = this.user();
 
+    // Reset pagination state for a fresh load
     this.pageSize.set(pageSize);
     this.currentPage.set(1);
     this.isLoading.set(true);
@@ -44,6 +47,7 @@ export class ClassListStore {
     this.errorMessage.set(null);
     this.hasMore.set(true);
 
+    // Always fetch the first page of all classes; fall back to empty list on error
     const allClasses$ = this.classService.classesList(1, pageSize).pipe(
       catchError((err) => {
         this.errorMessage.set('Failed to get class list: ' + err.message);
@@ -52,6 +56,7 @@ export class ClassListStore {
     );
 
     if (currentUser?.id && currentUser?.role === 'student') {
+      // For students: also fetch their enrolled classes in parallel via forkJoin
       const enrolled$ = this.classService
         .classesByStudentList(currentUser.id, 1, 1000)
         .pipe(catchError(() => of({ results: [], count: 0, next: null })));
@@ -68,7 +73,8 @@ export class ClassListStore {
       return;
     }
 
-    if (currentUser?.id && (currentUser?.role === 'teacher' || currentUser?.role === 'tutor')) {
+    if (currentUser?.id && currentUser?.role === 'teacher') {
+      // For teachers: also fetch their own classes in parallel via forkJoin
       const teacher$ = this.classService
         .classesByTeacherList(currentUser.id, 1, 1000)
         .pipe(catchError(() => of({ results: [], count: 0, next: null })));
@@ -85,6 +91,19 @@ export class ClassListStore {
       return;
     }
 
+    if (currentUser?.role === 'tutor') {
+      // Class board is not used for tutor role
+      this.classes.set([]);
+      this.enrolledClasses.set([]);
+      this.teacherClasses.set([]);
+      this.classEnrollmentCounts.set({});
+      this.total.set(0);
+      this.hasMore.set(false);
+      this.isLoading.set(false);
+      return;
+    }
+
+    // Unauthenticated or unrecognised role: just load all classes with no enrollment data
     allClasses$.subscribe((all) => {
       const allList = all.results ?? [];
       this.classes.set(allList);
@@ -96,6 +115,7 @@ export class ClassListStore {
   }
 
   loadMoreClasses(): void {
+    // Prevent duplicate loads: skip if already loading or no more pages exist
     if (this.isLoading() || this.isLoadingMore() || !this.hasMore()) {
       return;
     }
@@ -107,13 +127,16 @@ export class ClassListStore {
     this.classService.classesList(nextPage, this.pageSize()).subscribe({
       next: (res) => {
         const newItems = res.results ?? [];
+        // Append newly fetched classes to the existing list (infinite scroll pattern)
         this.classes.update((existing) => {
           const merged = [...existing, ...newItems];
+          // Rebuild enrollment map to include the newly appended items
           this.classEnrollmentCounts.set(this.buildEnrollmentMap(merged));
           return merged;
         });
         this.total.set(res.count ?? 0);
         this.currentPage.set(nextPage);
+        // Determine whether another page is available for future loads
         this.hasMore.set(Boolean(res.next));
         this.isLoadingMore.set(false);
       },

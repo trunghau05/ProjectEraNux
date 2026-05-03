@@ -8,12 +8,14 @@ import { Class } from './pages/class.page';
 import { VideoCallComponent } from './components/features/video-call/video-call.component';
 import { Course } from './pages/course.page';
 import { CourseDetailPage } from './pages/course-detail.page';
+import { SchedulePage } from './pages/schedule.page';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     { path: 'login', component: Login },
     { path: 'register', component: Register },
     { path: 'dashboard', component: Dashboard, canActivate: [AuthGuard]},
+    { path: 'schedule', component: SchedulePage, canActivate: [AuthGuard]},
     { path: 'course', component: Course, canActivate: [AuthGuard]},
     { path: 'course/detail', component: CourseDetailPage, canActivate: [AuthGuard]},
     { path: 'booking', component: Booking, canActivate: [AuthGuard]},

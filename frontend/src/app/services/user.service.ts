@@ -19,15 +19,18 @@ export class UserService {
   }
 
   loadUser() {
+    // Parse the user JSON stored in session storage; fall back to an empty object if absent
     const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
     this.user.set(storedUser);
   }
 
   getUser() {
+    // Return the current value of the user signal
     return this.user();
   }
 
   setUser(user: User) {
+    // Update the in-memory signal and persist the user to session storage
     this.user.set(user);
     sessionStorage.setItem('user', JSON.stringify(user));
   }

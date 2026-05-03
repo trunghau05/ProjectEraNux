@@ -474,6 +474,7 @@ export class Course implements OnInit {
   newClassDescription = '';
 
   ngOnInit(): void {
+    // Each role has a different data source; load accordingly
     if (this.isStudentRole()) {
       this.loadStudentJoinedTeachers();
       this.classStore.loadClassList();
@@ -481,6 +482,7 @@ export class Course implements OnInit {
     }
 
     if (this.isTutorRole()) {
+      // Tutors see booked students, not classes
       this.bookingStore.loadBookingData();
       return;
     }
@@ -491,10 +493,12 @@ export class Course implements OnInit {
   }
 
   onSearchChange(value: string): void {
+    // Normalize and store the search term to drive filtered computed lists
     this.searchValue = value.trim().toLowerCase();
   }
 
   openBookingDetail(teacher: Teacher): void {
+    // Navigate to the detail page showing booking history with a specific teacher
     this.router.navigate(['/course/detail'], {
       queryParams: {
         type: 'booking',
@@ -505,6 +509,7 @@ export class Course implements OnInit {
   }
 
   openTutorStudentDetail(item: TutorBookedStudent): void {
+    // Navigate to the detail page showing session history with a specific student (tutor view)
     this.router.navigate(['/course/detail'], {
       queryParams: {
         type: 'booking',
@@ -515,6 +520,7 @@ export class Course implements OnInit {
   }
 
   openClassDetail(classItem: ClassDetail): void {
+    // Navigate to the class detail page with route params pre-filled
     this.router.navigate(['/course/detail'], {
       queryParams: {
         type: 'class',
@@ -526,12 +532,14 @@ export class Course implements OnInit {
   }
 
   openCreateClassModal(): void {
+    // Clear stale errors, show the modal, and lazy-load the subject list
     this.createClassError.set(null);
     this.showCreateClassModal.set(true);
     this.loadSubjectsIfNeeded();
   }
 
   closeCreateClassModal(): void {
+    // Block close while a create request is in flight
     if (this.createClassLoading()) {
       return;
     }
@@ -542,6 +550,7 @@ export class Course implements OnInit {
   }
 
   submitCreateClass(): void {
+    // Guard: only teachers can create classes
     if (!this.isTeacherRole()) {
       return;
     }
@@ -550,6 +559,7 @@ export class Course implements OnInit {
     const subjectId = Number(this.newClassSubjectId);
     const maxStudents = Number(this.newClassMaxStudents);
 
+    // Validate required fields before sending the request
     if (!currentUser?.id || !subjectId || !maxStudents || maxStudents < 1) {
       this.createClassError.set('Please complete all required fields with valid values.');
       return;
@@ -572,6 +582,7 @@ export class Course implements OnInit {
         this.createClassLoading.set(false);
         this.showCreateClassModal.set(false);
         this.resetCreateClassForm();
+        // Refresh the class list to include the newly created class
         this.classStore.loadClassList();
         this.toastService.success('Class created successfully.');
       },
@@ -596,6 +607,7 @@ export class Course implements OnInit {
   }
 
   showLoadingState(): boolean {
+    // Return the loading flag for the data source relevant to the current role
     if (this.isStudentRole()) {
       return this.joinedTeachersLoading() || this.classLoading();
     }
@@ -612,6 +624,7 @@ export class Course implements OnInit {
   }
 
   combinedErrorMessage(): string | null {
+    // Surface the relevant error message for the current role's data source
     if (this.isStudentRole()) {
       return this.joinedTeachersError() || this.classError();
     }
@@ -628,30 +641,37 @@ export class Course implements OnInit {
   }
 
   showStudentBookingsSection(): boolean {
+    // The bookings section is visible when the filter is 'all' or explicitly 'bookings'
     return this.studentContentFilter === 'all' || this.studentContentFilter === 'bookings';
   }
 
   showStudentClassesSection(): boolean {
+    // The classes section is visible when the filter is 'all' or explicitly 'classes'
     return this.studentContentFilter === 'all' || this.studentContentFilter === 'classes';
   }
 
   get filteredStudentBookings(): Teacher[] {
+    // Filter the student's joined teachers by search text
     return this.joinedTeachers().filter((item) => this.matchesText([item.name, item.email, item.phone, item.role, item.bio ?? undefined]));
   }
 
   get filteredStudentClasses(): ClassDetail[] {
+    // Filter enrolled classes by search text
     return this.enrolledClasses().filter((item) => this.matchesText([item.subject?.name, item.teacher?.name, item.level, item.status]));
   }
 
   get filteredTutorStudents(): TutorBookedStudent[] {
+    // Filter the tutor's booked students by search text
     return this.bookedStudents().filter((item) => this.matchesText([item.student.name, item.student.email, item.student.phone]));
   }
 
   get filteredTeacherClasses(): ClassDetail[] {
+    // Filter the teacher's own classes by search text
     return this.teacherClasses().filter((item) => this.matchesText([item.subject?.name, item.teacher?.name, item.level, item.status]));
   }
 
   getClassInitial(classItem: ClassDetail): string {
+    // Return the first letter of the subject name as an avatar initial
     const subject = classItem.subject?.name?.trim();
     if (!subject) {
       return '?';
@@ -661,6 +681,7 @@ export class Course implements OnInit {
   }
 
   getClassBadgeClass(status?: string): string {
+    // Map a class status to its badge CSS class
     switch (status) {
       case 'open':
         return 'badge-open';
@@ -676,6 +697,7 @@ export class Course implements OnInit {
   }
 
   getBookingBadgeClass(status?: string): string {
+    // Map a booking status to its badge CSS class
     switch (status) {
       case 'pending':
         return 'badge-pending';
@@ -690,10 +712,12 @@ export class Course implements OnInit {
   }
 
   getLatestSlot(timeSlots: BookedTimeSlot[]): BookedTimeSlot | undefined {
+    // Sort descending by start time and return the first element (most recent slot)
     return [...timeSlots].sort((left, right) => new Date(right.start_at).getTime() - new Date(left.start_at).getTime())[0];
   }
 
   getNearestSlotLabel(timeSlots: BookedTimeSlot[]): string {
+    // Find the soonest future slot and return a formatted date-time label
     const now = Date.now();
     const nearest = [...timeSlots]
       .filter((slot) => new Date(slot.start_at).getTime() >= now)
@@ -758,6 +782,7 @@ export class Course implements OnInit {
   }
 
   private matchesText(values: Array<string | undefined>): boolean {
+    // Return true when no search term is set, or when any field contains the search term
     if (!this.searchValue) {
       return true;
     }
@@ -768,6 +793,7 @@ export class Course implements OnInit {
   }
 
   private resetCreateClassForm(): void {
+    // Clear all create-class form fields to their default values
     this.newClassSubjectId = '';
     this.newClassLevel = '';
     this.newClassMaxStudents = 30;
@@ -775,6 +801,7 @@ export class Course implements OnInit {
   }
 
   private loadSubjectsIfNeeded(): void {
+    // Skip the API call if subjects are already loaded or currently loading
     if (this.availableSubjects().length > 0 || this.subjectsLoading()) {
       return;
     }
@@ -805,10 +832,12 @@ export class Course implements OnInit {
 
     this.bookingsService.bookingsList().subscribe({
       next: (bookings: BookingDetail[]) => {
+        // Only include non-cancelled bookings that belong to this student
         const participatedBookings = bookings
           .filter((item) => item.student?.id === currentUser.id)
           .filter((item) => item.status !== 'cancelled');
 
+        // Deduplicate teachers by ID, keeping the first encountered entry
         const uniqueTeacherMap = participatedBookings.reduce<Record<number, Teacher>>((acc, item) => {
           if (item.teacher?.id) {
             acc[item.teacher.id] = item.teacher;

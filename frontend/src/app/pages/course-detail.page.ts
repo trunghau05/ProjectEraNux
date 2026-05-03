@@ -487,10 +487,12 @@ export class CourseDetailPage implements OnInit {
   readonly headerStudentName = signal<string>('');
 
   ngOnInit(): void {
+    // Kick off the session list load only if the store hasn't loaded yet
     if (this.sessionStore.sessions().length === 0 && !this.sessionStore.isLoading()) {
       this.sessionStore.loadSessionList();
     }
 
+    // Rebuild the displayed sessions whenever the query params change
     this.route.queryParamMap.subscribe((params) => {
       this.detailType.set(params.get('type') === 'class' ? 'class' : 'booking');
       this.teacherId.set(this.toInt(params.get('teacherId')));
@@ -506,6 +508,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   headerTitle(): string {
+    // For booking type, prefer teacher name then student name; fallback to generic label
     if (this.detailType() === 'booking') {
       if (this.headerTeacherName()) {
         return this.headerTeacherName();
@@ -520,6 +523,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   headerSubtitle(): string {
+    // Describe the kind of history shown based on type and which party was matched
     if (this.detailType() === 'booking') {
       if (this.teacherId()) {
         return '1-on-1 session history';
@@ -537,11 +541,13 @@ export class CourseDetailPage implements OnInit {
   }
 
   headerInitial(): string {
+    // Return the first character of the title as an avatar initial
     const title = this.headerTitle();
     return title.charAt(0).toUpperCase();
   }
 
   canCreateAssignment(): boolean {
+    // Only teachers and tutors are allowed to create assignments
     const role = this.userService.user().role;
     return role === 'teacher' || role === 'tutor';
   }
@@ -570,8 +576,10 @@ export class CourseDetailPage implements OnInit {
     this.classInfoLoadError.set(null);
     this.classInfoSaveError.set(null);
     this.classInfoSaveSuccess.set(false);
+    // Ensure the subject dropdown has data before the modal renders
     this.loadSubjectsIfNeeded();
 
+    // Reuse the already-loaded class detail if available; otherwise fetch from the API
     if (this.classDetail()?.id === id) {
       this.populateEditFields(this.classDetail()!);
       return;
@@ -592,6 +600,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   closeClassInfoModal(): void {
+    // Block close while a save request is still in progress
     if (this.classInfoSaving()) return;
     this.showClassInfoModal.set(false);
   }
@@ -599,6 +608,7 @@ export class CourseDetailPage implements OnInit {
   submitClassInfo(): void {
     const id = this.classId();
     if (!id) return;
+    // Validate that max_students is not below the current enrollment count
     if (this.isMaxStudentsInvalid()) {
       this.classInfoSaveError.set('Max students cannot be smaller than enrolled students.');
       return;
@@ -616,9 +626,11 @@ export class CourseDetailPage implements OnInit {
     }).subscribe({
       next: (updated) => {
         const prev = this.classDetail()!;
+        // Resolve the full subject object from the local list to avoid a secondary API call
         const selectedSubject = this.availableSubjects().find(
           (subject) => subject.id.toString() === this.editSubjectId,
         );
+        // Merge the server response into the local class detail signal
         this.classDetail.set({
           ...prev,
           subject: selectedSubject ?? prev.subject,
@@ -638,6 +650,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   private populateEditFields(detail: ClassDetail): void {
+    // Mirror the server-side class detail into the edit form fields
     this.editSubjectId = detail.subject.id.toString();
     this.editLevel = detail.level ?? '';
     this.editMaxStudents = detail.max_students ?? null;
@@ -646,6 +659,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   private loadSubjectsIfNeeded(): void {
+    // Skip the API call if subjects are already cached or a request is in progress
     if (this.availableSubjects().length > 0 || this.subjectsLoading()) {
       return;
     }
@@ -665,6 +679,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   isMaxStudentsInvalid(): boolean {
+    // New max cannot be below the number of students already enrolled
     const enrolledStudents = this.classDetail()?.enrolled_students ?? 0;
     return this.editMaxStudents !== null && this.editMaxStudents < enrolledStudents;
   }
@@ -681,8 +696,10 @@ export class CourseDetailPage implements OnInit {
   pdfDragOver = false;
 
   openCreateAssignment(): void {
+    // Reset all form fields before showing the modal
     this.assignmentTitle = '';
     this.assignmentDescription = '';
+    // Default the session dropdown to the first available session
     this.assignmentSessionId = this.sessions()[0]?.session.id?.toString() ?? '';
     this.assignmentDueDate = '';
     this.assignmentPdfFile = null;
@@ -692,6 +709,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   closeAssignmentModal(): void {
+    // Block close while the assignment is being submitted
     if (this.assignmentLoading()) return;
     this.showAssignmentModal.set(false);
   }
@@ -706,6 +724,7 @@ export class CourseDetailPage implements OnInit {
       return;
     }
 
+    // Reject non-PDF files by MIME type and extension
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (!isPdf) {
       this.assignmentPdfFile = null;
@@ -725,6 +744,7 @@ export class CourseDetailPage implements OnInit {
     this.pdfDragOver = false;
     const file = event.dataTransfer?.files?.[0] ?? null;
     if (!file) return;
+    // Validate the dropped file type before accepting it
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (!isPdf) {
       this.assignmentError.set('Only PDF files are allowed.');
@@ -763,6 +783,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   toggleSession(vm: SessionViewModel): void {
+    // Toggle the expanded state of the clicked session card; leave all others unchanged
     const updated = this.sessions().map((item) =>
       item.session.id === vm.session.id ? { ...item, expanded: !item.expanded } : item,
     );
@@ -770,6 +791,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   loadSummary(vm: SessionViewModel): void {
+    // Fetch the AI-generated transcript summary for a session recording
     const audioUrl = vm.session.recording_audio_url;
     if (!audioUrl) return;
 
@@ -789,6 +811,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   getVideoUrl(url: string): SafeResourceUrl {
+    // Extract the YouTube video ID and return a safe embed URL; fall back to the raw URL
     const apiKey = 'AIzaSyBtuf_EaTWWlAbySX4SOt0eRXjVnaRmq0A';
     const ytMatch = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
     if (ytMatch) {
@@ -830,6 +853,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   private buildSessions(): void {
+    // If the store is still loading, poll at 50ms intervals until it finishes
     if (this.sessionStore.isLoading()) {
       this.loading.set(true);
       this.errorMsg.set(null);
@@ -847,6 +871,7 @@ export class CourseDetailPage implements OnInit {
   }
 
   private deriveAndSetSessions(): void {
+    // Surface any store-level error before attempting to build the list
     const storeError = this.sessionStore.errorMessage();
     if (storeError) {
       this.errorMsg.set(storeError);
@@ -855,10 +880,12 @@ export class CourseDetailPage implements OnInit {
     }
 
     const relevant = this.filterRelevant(this.sessionStore.sessions());
+    // Sort chronologically so session numbering matches temporal order
     const sorted = [...relevant].sort(
       (a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime(),
     );
 
+    // Wrap each session in a view model with display metadata
     this.sessions.set(
       sorted.map((s, i) => ({
         session: s,
@@ -876,9 +903,11 @@ export class CourseDetailPage implements OnInit {
   private filterRelevant(sessions: SessionDetail[]): SessionDetail[] {
     if (this.detailType() === 'booking') {
       return sessions.filter((s) => {
+        // Booking sessions do not belong to a class
         if (s.class_obj) {
           return false;
         }
+        // Optionally filter to a specific teacher or student
         if (this.teacherId() && s.teacher?.id !== this.teacherId()) {
           return false;
         }
@@ -894,6 +923,7 @@ export class CourseDetailPage implements OnInit {
       return [];
     }
 
+    // Class-type: only include sessions belonging to the specified class
     return sessions.filter((s) => {
       const isClassMatched = ((s.class_obj as ClassDetail | null)?.id ?? null) === classId;
       if (!isClassMatched) {
@@ -907,10 +937,12 @@ export class CourseDetailPage implements OnInit {
   }
 
   private updateSession(id: number, patch: Partial<SessionViewModel>): void {
+    // Immutably update a single session view model by ID
     this.sessions.set(this.sessions().map((vm) => (vm.session.id === id ? { ...vm, ...patch } : vm)));
   }
 
   private toInt(value: string | null): number | null {
+    // Parse a nullable string to an integer; return null for missing or non-numeric input
     if (!value) {
       return null;
     }

@@ -48,6 +48,7 @@ class BookingViewSet(ModelViewSet):
     @action(detail=False, methods=['get'], url_path=r'tutor/(?P<tutor_id>[^/.]+)/students')
     def tutor_students(self, request, tutor_id=None):
         tutor = get_object_or_404(Teacher, pk=tutor_id, role=Teacher.TUTOR)
+        # Fetch all bookings for this tutor, ordered for stable grouping
         bookings = (
             self.queryset.filter(teacher=tutor)
             .order_by('student__name', 'time_slot__start_at', 'id')
@@ -56,12 +57,14 @@ class BookingViewSet(ModelViewSet):
         grouped_students = OrderedDict()
 
         for booking in bookings:
+            # Create a new entry the first time we encounter this student
             if booking.student_id not in grouped_students:
                 grouped_students[booking.student_id] = {
                     'student': booking.student,
                     'time_slots': [],
                 }
 
+            # Append each booking's time-slot info to the student's list
             grouped_students[booking.student_id]['time_slots'].append({
                 'booking_id': booking.id,
                 'id': booking.time_slot.id,
@@ -82,6 +85,7 @@ class BookingViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='confirm')
     def confirm_booking(self, request, pk=None):
         with transaction.atomic():
+            # Lock the booking row to prevent concurrent double-confirms
             booking = get_object_or_404(self.queryset.select_for_update(), pk=pk)
 
             if booking.status == Booking.CANCELLED:
@@ -90,6 +94,7 @@ class BookingViewSet(ModelViewSet):
             booking.status = Booking.CONFIRMED
             booking.save(update_fields=['status'])
 
+            # Mark the time slot as booked so no other student can claim it
             time_slot = booking.time_slot
             if time_slot.status != time_slot.BOOKED:
                 time_slot.status = time_slot.BOOKED

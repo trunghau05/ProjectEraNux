@@ -1,0 +1,28 @@
+<div class="list board-item flex-col">
+  <div class="board-label flex-betw">
+    <span>Class Board</span>
+    <div (click)="navigateToClass()" class="navigate-btn">
+      <mat-icon>arrow_right_alt</mat-icon>
+    </div>
+  </div>
+  <div class="board flex-col mt-20">
+    @if (classes.length === 0) {
+      <p class="empty-week-note">No classes available.</p>
+    }
+    @for (c of classes; track c.id) {
+      @let progress = getClassProgressPercent(c.id);
+      <div class="class-item flex-cen">
+        <div class="flex-col" style="width: 65%; gap: 5px;">
+          <span>{{ c.description }}</span>
+          <p>{{ getClassSecondaryText(c) }}</p>
+        </div>
+        <div class="flex-cen" style="gap: 10px; width: 35%; position: relative;">
+          <div style="flex: 1; height: 4px; background-color: #e0e0e0; border-radius: 2px; overflow: hidden; position: relative;">
+            <div [style.width.%]="progress" [style.height.px]="4" [style.background-color]="getProgressColor(progress)" style="transition: width 0.3s ease;"></div>
+          </div>
+          <span>{{ progress }}%</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

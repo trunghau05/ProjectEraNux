@@ -1,15 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { NotificationStore } from '../../../stores/notification.store';
 import { UserStore } from '../../../stores/user.store';
-
-type UserNotification = {
-  id: number;
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-};
 
 @Component({
   selector: 'app-user-info',
@@ -19,36 +12,19 @@ type UserNotification = {
 })
 export class UserInfo implements OnInit {
   readonly userStore = inject(UserStore);
+  readonly notificationStore = inject(NotificationStore);
   readonly expandedNotificationIds = signal<number[]>([]);
-  readonly notifications = signal<UserNotification[]>([
-    {
-      id: 1,
-      title: 'Session reminder',
-      message: 'You have a Math session at 3:00 PM today.',
-      time: '5m ago',
-      read: false,
-    },
-    {
-      id: 2,
-      title: 'Booking update',
-      message: 'Your Physics class booking has been confirmed.',
-      time: '1h ago',
-      read: false,
-    },
-    {
-      id: 3,
-      title: 'Class material',
-      message: 'New documents were uploaded for Chemistry.',
-      time: 'Yesterday',
-      read: true,
-    },
-  ]);
+  readonly notifications = this.notificationStore.notifications;
+  readonly unreadCount = this.notificationStore.unreadCount;
 
   ngOnInit(): void {
+    // Fetch the current user's profile from the store on component init
     this.userStore.loadUserInfo();
+    this.notificationStore.loadNotifications();
   }
 
   logout() {
+    // Ask for confirmation before clearing the session and forcing a full page reload
     const confirmed = window.confirm('Are you sure you want to log out?');
     if (confirmed) {
       sessionStorage.removeItem('user');
@@ -57,16 +33,16 @@ export class UserInfo implements OnInit {
   }
 
   markAsRead(id: number): void {
-    this.notifications.update((items) =>
-      items.map((item) => (item.id === id ? { ...item, read: true } : item)),
-    );
+    this.notificationStore.markAsRead(id);
   }
 
   isExpanded(id: number): boolean {
+    // Check whether the notification detail panel is currently open
     return this.expandedNotificationIds().includes(id);
   }
 
   onNotificationClick(id: number): void {
+    // Mark as read first, then toggle the expanded state
     this.markAsRead(id);
     this.expandedNotificationIds.update((ids) =>
       ids.includes(id) ? ids.filter((existingId) => existingId !== id) : [...ids, id],
@@ -74,7 +50,7 @@ export class UserInfo implements OnInit {
   }
 
   clearAllNotifications(): void {
-    this.notifications.set([]);
+    this.notificationStore.markAllRead();
     this.expandedNotificationIds.set([]);
   }
 }

@@ -2,14 +2,18 @@
   <div class="board-label flex-betw">
     <span>Schedule Board</span>
     <div class="schedule-tools">
-      <span class="week-range">{{ selectedWeekDisplay }}</span>
-      <div class="calendar-action flex-cen" title="Pick a date to filter by week" (click)="openWeekPicker(weekPickerStudent)">
+      <button
+        type="button"
+        class="week-picker-trigger"
+        title="Pick a date to filter by week"
+        (click)="openWeekPicker(weekPicker)">
         <mat-icon>today</mat-icon>
-      </div>
+        <span class="week-picker-text">{{ selectedWeekDisplay }}</span>
+      </button>
     </div>
   </div>
   <input
-    #weekPickerStudent
+    #weekPicker
     type="date"
     class="week-picker-input"
     [value]="selectedWeekDateValue"
@@ -19,17 +23,17 @@
       @if (sessionsByDate.length === 0) {
         <p class="empty-week-note">No schedules in the selected week.</p>
       } @else {
-        <div class="schedule-row" style="display: flex; gap: 20px;">
+        <div class="schedule-row">
           @for (day of sessionsByDate; track day.date) {
-            <div class="schedule-col flex-col" style="gap: 20px;">
-              <span>{{ day.displayDate }}</span>
+            <div class="schedule-col">
+              <span class="col-date">{{ day.displayDate }}</span>
 
               @for (session of day.sessions; track session.id) {
-                <div class="schedule-item" [ngClass]="getSessionClass(session)" style="gap: 5px; width: 100%; border-radius: 10px; padding: 10px; box-sizing: border-box;">
-                  <span style="color: white; font-weight: 500; font-size: 12px; text-align: left;">
+                <div class="schedule-item">
+                  <span class="session-title">
                     {{ getSessionHeadline(session) }}
                   </span>
-                  <p style="color: #f0f0f0ff; font-size: 11px; margin: 0;">
+                  <p class="session-time">
                     {{ session.start_at | date:'HH:mm' }} - {{ session.end_at | date:'HH:mm' }}
                   </p>
                   <button
@@ -37,6 +41,8 @@
                     class="join-session-btn"
                     [class.join-session-btn-disabled]="!isSessionJoinable(session) || isJoiningSession(session)"
                     [disabled]="!isSessionJoinable(session) || isJoiningSession(session)"
+                    [style.background-color]="getStatusColor(session)"
+                    [style.color]="getStatusTextColor(session)"
                     (click)="handleJoinSession(session)">
                     {{ isJoiningSession(session) ? 'Joining...' : getSessionJoinButtonText(session) }}
                   </button>

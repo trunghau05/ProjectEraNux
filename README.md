@@ -1,7 +1,7 @@
 Django
 pip install django
 pip show django
-python -m django startproject "tên dự án"
+python -m django startproject "new project"
 pip install django-cors-headers
 pip install mysqlclient
 pip install djangorestframework drf-spectacular
@@ -15,7 +15,7 @@ python manage.py runserver
 python manage.py startapp “chức năng”
 ---
 Angular
-ng new "tên dự án"
+ng new "new project"
 npm install -g @angular/cli
 npm install @angular/router
 ng add @angular/material
@@ -27,12 +27,13 @@ npm run start
 ng build
 ng serve
 ---
+Generate Service
 python manage.py spectacular --file openapi.json
 python manage.py runserver
 openapi-generator-cli generate -i http://localhost:8000/api/schema/ -g typescript-angular -o src/app/apis --additional-properties=providedInRoot=true
 npm run start
 ---
-STT
+Stt Server
 cd stt_server
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn app:app --host 0.0.0.0 --port 8001

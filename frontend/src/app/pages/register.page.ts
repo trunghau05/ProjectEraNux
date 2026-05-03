@@ -134,15 +134,18 @@ export class Register {
   bio = '';
 
   onSubmit() {
+    // Validate that all required fields are filled
     if (!this.fullName || !this.email || !this.password || !this.confirmPassword || !this.role) {
       this.toastService.warning('Please fill all required fields and select a role');
       return;
     }
+    // Ensure both password fields match before proceeding
     if (this.password !== this.confirmPassword) {
       this.toastService.warning('Passwords do not match');
       return;
     }
 
+    // Students require additional fields: birth date, level, and phone
     if (this.role === 'student') {
       if (!this.birth || !this.level || !this.phone) {
         this.toastService.warning('Please provide birth date, level and phone for students');
@@ -150,6 +153,7 @@ export class Register {
       }
     }
 
+    // Teachers and tutors require a bio, birth date, and phone
     if (this.role === 'teacher' || this.role === 'tutor') {
       if (!this.bio || !this.birth || !this.phone) {
         this.toastService.warning('Please provide a short bio, birth date and phone for teachers/tutors');
@@ -159,6 +163,7 @@ export class Register {
 
     this.isLoading = true;
 
+    // Start with the common fields shared across all roles
     const payload: any = {
       name: this.fullName,
       email: this.email,
@@ -166,6 +171,7 @@ export class Register {
       role: this.role,
     };
 
+    // Append role-specific fields to the payload
     if (this.role === 'student') {
       payload.birth = this.birth;
       payload.level = this.level;
@@ -174,10 +180,11 @@ export class Register {
       payload.bio = this.bio;
       payload.birth = this.birth;
       payload.phone = this.phone;
-      payload.label = this.role; 
+      payload.label = this.role; // used by the teacher serializer to set the role label
     }
 
     if (this.role === 'student') {
+      // Call the Students API for student registration
       this.studentService.studentsCreate(payload).subscribe({
         next: (res) => {
           this.isLoading = false;
@@ -190,6 +197,7 @@ export class Register {
         }
       })
     } else {
+      // Call the Teachers API for teacher/tutor registration
       this.teacherService.teachersCreate(payload).subscribe({
         next: (res) => {
           this.isLoading = false;

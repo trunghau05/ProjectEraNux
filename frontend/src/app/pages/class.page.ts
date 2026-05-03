@@ -1,13 +1,16 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 import { Search } from '../components/shared/search/search.component';
-import { ClassDetail } from '../apis';
+import { ClassDetail, ClassesService } from '../apis';
 import { ClassListStore } from '../stores/class.store';
+import { ToastService } from '../services/toast.service';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-class',
-  imports: [CommonModule, FormsModule, Search],
+  imports: [CommonModule, FormsModule, Search, MatIconModule],
   styles: `
     .class-container { width: 100%; height: 100vh; padding: 30px; box-sizing: border-box; overflow: auto; scrollbar-width: thin; scrollbar-color: #6b46c1 #f1f1f1; }
     .title { font-size: 14px; font-weight: 500; height: 25px; }
@@ -46,6 +49,27 @@ import { ClassListStore } from '../stores/class.store';
     .class-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     .class-container::-webkit-scrollbar-thumb { background: #6b46c1; border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
     .class-container::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(9, 9, 18, 0.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    .modal-box { width: min(100%, 460px); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 34px rgba(0,0,0,0.2); }
+    .modal-inner { width: 100%; box-sizing: border-box; background: #fff; padding: 26px; display: flex; flex-direction: column; gap: 10px; }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+    .modal-header h4 { margin: 0; font-size: 18px; color: #1a1a2e; }
+    .modal-close-btn { flex-shrink: 0; width: 28px; height: 28px; border: none; background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #9a9ab0; transition: background 0.15s, color 0.15s; padding: 0; margin-top: -2px; }
+    .modal-close-btn:hover { background: #f1f0f8; color: #1a1a2e; }
+    .modal-detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f1f1; }
+    .modal-detail-row:last-of-type { border: none; }
+    .modal-detail-label { font-size: 11px; color: #acacacff; }
+    .modal-detail-value { font-size: 11px; font-weight: 500; }
+    .modal-helper { font-size: 11px; color: #6a6a6a; }
+    .modal-helper.error { color: #bb295f; font-weight: 500; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 4px; }
+    .modal-primary { flex: 1; background: #6b46c1; color: #fff; border: none; border-radius: 6px; padding: 10px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .modal-primary:disabled { background: #c4b5fd; cursor: not-allowed; }
+    .modal-secondary { flex: 1; background: #edf0fa; color: #4a4a4a; border: none; border-radius: 6px; padding: 10px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     @media (max-width: 1200px) {
       .class-list { grid-template-columns: repeat(3, 1fr); }
     }
@@ -130,7 +154,7 @@ import { ClassListStore } from '../stores/class.store';
                   <span class="class-detail-value">{{ formatDate(item.created_at) }}</span>
                 </div>
               </div>
-              <button class="class-button" [ngClass]="getStatusButtonClass(item.status)" [disabled]="item.status !== 'open'">
+              <button class="class-button" [ngClass]="getStatusButtonClass(item.status)" [disabled]="item.status !== 'open'" (click)="openRegisterModal(item)">
                 {{ item.status === 'open' ? 'Register' : 'Closed' }}
               </button>
             </div>
@@ -149,10 +173,62 @@ import { ClassListStore } from '../stores/class.store';
         </div>
       }
     </div>
+
+    @if (selectedClass()) {
+      <div class="modal-overlay" (click)="closeRegisterModal()">
+        <div class="modal-box" (click)="$event.stopPropagation()">
+          <div class="modal-inner">
+            <div class="modal-header">
+              <h4>Register for class</h4>
+              <button type="button" class="modal-close-btn" (click)="closeRegisterModal()" aria-label="Close">
+                <mat-icon style="font-size:18px;width:18px;height:18px;line-height:18px">close</mat-icon>
+              </button>
+            </div>
+
+            <div class="modal-detail-row">
+              <span class="modal-detail-label">Subject:</span>
+              <span class="modal-detail-value">{{ selectedClass()!.subject.name || '-' }}</span>
+            </div>
+            <div class="modal-detail-row">
+              <span class="modal-detail-label">Teacher:</span>
+              <span class="modal-detail-value">{{ selectedClass()!.teacher.name || '-' }}</span>
+            </div>
+            <div class="modal-detail-row">
+              <span class="modal-detail-label">Level:</span>
+              <span class="modal-detail-value">{{ selectedClass()!.level || '-' }}</span>
+            </div>
+            <div class="modal-detail-row">
+              <span class="modal-detail-label">Slots remaining:</span>
+              <span class="modal-detail-value">{{ (selectedClass()!.max_students || 0) - getEnrolledCount(selectedClass()!.id) }} / {{ selectedClass()!.max_students || '-' }}</span>
+            </div>
+
+            @if (registerError()) {
+              <div class="modal-helper error">{{ registerError() }}</div>
+            } @else {
+              <div class="modal-helper">You will be enrolled into this class immediately after confirming.</div>
+            }
+
+            <div class="modal-buttons">
+              <button type="button" class="modal-secondary" [disabled]="registerLoading()" (click)="closeRegisterModal()">Cancel</button>
+              <button type="button" class="modal-primary" [disabled]="registerLoading()" (click)="submitRegister()">
+                @if (registerLoading()) {
+                  <div class="spinner"></div>
+                } @else {
+                  Confirm
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `,
 })
 export class Class implements OnInit {
   private classStore = inject(ClassListStore);
+  private classesService = inject(ClassesService);
+  private toastService = inject(ToastService);
+  private userService = inject(UserService);
 
   readonly classes = this.classStore.classes;
   readonly isLoading = this.classStore.isLoading;
@@ -164,22 +240,62 @@ export class Class implements OnInit {
   filterStatus = 'all';
   filterSubject = 'all';
 
+  readonly selectedClass = signal<ClassDetail | null>(null);
+  readonly registerLoading = signal(false);
+  readonly registerError = signal('');
+
   ngOnInit(): void {
+    // Load the first page of classes when the component initializes
     this.classStore.loadClassList();
   }
 
   onSearchChange(value: string): void {
+    // Update the search query (trimmed, lowercase) to drive the filtered list
     this.searchQuery = value.trim().toLowerCase();
   }
 
   onScroll(event: Event): void {
     const el = event.target as HTMLElement;
+    // Trigger loading more classes when the user is near the bottom of the scroll container
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 120) {
       this.classStore.loadMoreClasses();
     }
   }
 
+  openRegisterModal(item: ClassDetail): void {
+    this.registerError.set('');
+    this.selectedClass.set(item);
+  }
+
+  closeRegisterModal(): void {
+    if (this.registerLoading()) return;
+    this.selectedClass.set(null);
+    this.registerError.set('');
+  }
+
+  submitRegister(): void {
+    const item = this.selectedClass();
+    if (!item) return;
+    const studentId = this.userService.getUser().id;
+    this.registerLoading.set(true);
+    this.registerError.set('');
+    this.classesService.classesRegisterStudentCreate(item.id, { student_id: studentId }).subscribe({
+      next: (res) => {
+        this.registerLoading.set(false);
+        this.selectedClass.set(null);
+        this.toastService.success(res.message || 'Registered successfully!');
+        this.classStore.loadClassList();
+      },
+      error: (err) => {
+        this.registerLoading.set(false);
+        const msg = err?.error?.message || err?.error?.detail || 'Registration failed. Please try again.';
+        this.registerError.set(msg);
+      },
+    });
+  }
+
   get filteredClasses(): ClassDetail[] {
+    // Apply search text, status, and subject filters simultaneously
     return this.classes().filter((item) => {
       const subjectName = (item.subject?.name || '').toLowerCase();
       const teacherName = (item.teacher?.name || '').toLowerCase();
@@ -191,6 +307,7 @@ export class Class implements OnInit {
   }
 
   get subjectOptions(): string[] {
+    // Collect unique lowercase subject names from the full class list for the filter dropdown
     const names = new Set(
       this.classes()
         .map((item) => item.subject?.name)
@@ -201,6 +318,7 @@ export class Class implements OnInit {
   }
 
   toTitleCase(value: string): string {
+    // Capitalize the first letter of each word in the given string
     return value
       .split(' ')
       .filter((word) => word.length > 0)
@@ -209,11 +327,13 @@ export class Class implements OnInit {
   }
 
   getInitial(item: ClassDetail): string {
+    // Return the first character of the subject name for use as the avatar initial
     const name = item.subject?.name?.trim();
     return name ? name.charAt(0).toUpperCase() : '?';
   }
 
   formatStatus(status?: string): string {
+    // Capitalize the status string for display (e.g., 'open' → 'Open')
     if (!status) {
       return 'Unknown';
     }
@@ -221,6 +341,7 @@ export class Class implements OnInit {
   }
 
   getStatusBadgeClass(status?: string): string {
+    // Map a class status to its corresponding CSS badge class
     switch (status) {
       case 'open': return 'badge-open';
       case 'full': return 'badge-full';
@@ -231,6 +352,7 @@ export class Class implements OnInit {
   }
 
   getStatusButtonClass(status?: string): string {
+    // Map a class status to its corresponding CSS button class
     switch (status) {
       case 'open': return 'btn-open';
       case 'full': return 'btn-full';
@@ -241,10 +363,12 @@ export class Class implements OnInit {
   }
 
   getEnrolledCount(classId: number): number {
+    // Look up the pre-computed enrollment count for a class from the store's enrollment map
     return this.classEnrollmentCounts()[classId] || 0;
   }
 
   formatDate(rawDate: string): string {
+    // Parse and format a date string; return '-' for missing or invalid dates
     if (!rawDate) {
       return '-';
     }

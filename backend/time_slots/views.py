@@ -27,6 +27,7 @@ class TimeSlotViewSet(ModelViewSet):
     )
     @action(detail=False, methods=['get'], url_path=r'teacher/(?P<teacher_id>[^/.]+)')
     def by_teacher(self, request, teacher_id=None):
+        # Return every time slot owned by this teacher regardless of status
         teacher = get_object_or_404(Teacher, pk=teacher_id)
         slots = self.queryset.filter(teacher=teacher)
         serializer = self.get_serializer(slots, many=True)
@@ -38,6 +39,7 @@ class TimeSlotViewSet(ModelViewSet):
     )
     @action(detail=False, methods=['get'], url_path=r'teacher/(?P<teacher_id>[^/.]+)/available')
     def by_teacher_available(self, request, teacher_id=None):
+        # Only return slots the teacher has explicitly made available for booking
         teacher = get_object_or_404(Teacher, pk=teacher_id)
         slots = self.queryset.filter(teacher=teacher, status=TimeSlot.AVAILABLE)
         serializer = self.get_serializer(slots, many=True)
@@ -51,6 +53,7 @@ class TimeSlotViewSet(ModelViewSet):
     def mark_booked(self, request, pk=None):
         slot = get_object_or_404(TimeSlot, pk=pk)
 
+        # Require a confirmed booking before marking the slot as taken
         has_confirmed_booking = Booking.objects.filter(
             time_slot=slot,
             status=Booking.CONFIRMED,
@@ -62,6 +65,7 @@ class TimeSlotViewSet(ModelViewSet):
                 status=400,
             )
 
+        # Only update if not already booked to avoid a redundant write
         if slot.status != TimeSlot.BOOKED:
             slot.status = TimeSlot.BOOKED
             slot.save(update_fields=['status'])

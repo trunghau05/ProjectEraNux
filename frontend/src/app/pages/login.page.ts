@@ -106,6 +106,7 @@ export class Login {
   onSubmit() {
     this.isLoading = true;
     
+    // Build the login payload from the form fields
     const payload = {
       email: this.email,
       password: this.password,
@@ -113,13 +114,16 @@ export class Login {
 
     this.loginService.loginCreate(payload).subscribe({
       next: (res) => {
+        // Persist the returned user object (id, role, etc.) in session storage for auth checks
         sessionStorage.setItem('user', JSON.stringify(res));        
         this.isLoading = false;
         this.toastService.success('Login successful!');
+        // Redirect to the main dashboard after a successful login
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading = false;        
+        // Show the server-provided error message, or a generic fallback
         this.toastService.error(err?.error?.message ?? 'Login failed.');
       }
     })

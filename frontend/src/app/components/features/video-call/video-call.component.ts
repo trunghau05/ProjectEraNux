@@ -954,6 +954,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
       return null;
     }
 
+    // Merge all collected data chunks into a single WebM blob
     const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
     this.recordedChunks = [];
     return blob;
@@ -1002,6 +1003,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private detectAudioExtension(mimeType: string): string {
+    // Map MIME type string to a file extension fallback
     if (mimeType.includes('wav')) {
       return 'wav';
     }
@@ -1018,11 +1020,13 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private async decodeAudioBlob(audioBlob: Blob): Promise<AudioBuffer> {
+    // Decode the raw blob bytes into an AudioBuffer for WAV conversion
     const arrayBuffer = await audioBlob.arrayBuffer();
     const audioContext = new AudioContext();
     try {
       return await audioContext.decodeAudioData(arrayBuffer.slice(0));
     } finally {
+      // Always close the AudioContext to release resources
       await audioContext.close();
     }
   }
@@ -1042,6 +1046,8 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     const blockAlign = channels * (bitDepth / 8);
     const byteRate = sampleRate * blockAlign;
     const dataSize = samplesLength * blockAlign;
+    // 44-byte WAV header + raw PCM data
+    // 44-byte WAV header + raw PCM data
     const buffer = new ArrayBuffer(44 + dataSize);
     const view = new DataView(buffer);
 
@@ -1064,6 +1070,8 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.writeWavString(view, 36, 'data');
     view.setUint32(40, dataSize, true);
 
+    // Interleave channel samples and clamp to 16-bit signed range
+    // Interleave channel samples and clamp to 16-bit signed range
     let offset = 44;
     for (let i = 0; i < samplesLength; i++) {
       for (let channel = 0; channel < channels; channel++) {
@@ -1147,6 +1155,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   openLatestRecording(): void {
+    // Open the Cloudinary URL in a new tab with security-safe rel
     if (this.latestRecordingUrl) {
       window.open(this.latestRecordingUrl, '_blank', 'noopener,noreferrer');
     }
@@ -1213,7 +1222,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
   toggleChat(): void {
     this.isChatOpen = !this.isChatOpen;
     
-    // Clear unread indicator when opening chat
+    // Clear the unread badge when the user opens the chat panel
     if (this.isChatOpen) {
       this.hasUnreadMessages = false;
     }
@@ -1237,7 +1246,7 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     const messageText = this.newMessage.trim();
     
-    // Add own message to display
+    // Add the sender's own message to the local display list
     const message = {
       id: Date.now().toString() + Math.random(),
       userId: this.userId,
@@ -1250,16 +1259,15 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.chatMessages.push(message);
     this.newMessage = '';
 
-    // Reset textarea height
+    // Reset the textarea back to its default height after sending
     if (this.chatTextarea) {
       this.chatTextarea.nativeElement.style.height = 'auto';
     }
 
-    // Send message to other participants via WebRTC data channel
+    // Broadcast the message to all other participants via WebRTC data channel
     this.webrtcService.sendChatMessage(messageText, this.userId, this.userName);
     console.log('Sent message to peers');
     
-    // Scroll to bottom after a short delay
     setTimeout(() => {
       this.scrollChatToBottom();
     }, 50);
@@ -1279,6 +1287,8 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
    * Handle Enter key in chat input
    */
   onChatKeydown(event: KeyboardEvent): void {
+    // Send on plain Enter; allow Shift+Enter for newlines
+    // Send on plain Enter; allow Shift+Enter for newlines
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.sendMessage();
@@ -1289,8 +1299,9 @@ export class VideoCallComponent implements OnInit, OnDestroy, AfterViewChecked {
    * Auto-resize textarea based on content
    */
   onChatInput(event: Event): void {
+    // Reset to auto first so scrollHeight reflects the true content height
+    // Reset to auto first so scrollHeight reflects the true content height
     const textarea = event.target as HTMLTextAreaElement;
-    textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 'px';
   }
 }

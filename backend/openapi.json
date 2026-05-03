@@ -611,6 +611,111 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadRecordingResponse'
           description: ''
+  /api/notifications/:
+    get:
+      operationId: notifications_list
+      description: List notifications for a user identified by role + user_id.
+      parameters:
+      - in: query
+        name: role
+        schema:
+          type: string
+        description: 'Role of the user: student | teacher | tutor'
+      - in: query
+        name: user_id
+        schema:
+          type: integer
+        description: ID of the user
+      tags:
+      - notifications
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/{id}/:
+    patch:
+      operationId: notifications_partial_update
+      description: Mark a single notification as read.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedNotification'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/notifications/mark-all-read/:
+    post:
+      operationId: notifications_mark_all_read_create
+      description: Mark all notifications as read for the given role + user_id.
+      parameters:
+      - in: query
+        name: role
+        schema:
+          type: string
+      - in: query
+        name: user_id
+        schema:
+          type: integer
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Notification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+          description: ''
   /api/rooms/:
     get:
       operationId: rooms_list
@@ -2332,6 +2437,51 @@ components:
       required:
       - email
       - password
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/NotificationRoleEnum'
+        student_id:
+          type: integer
+          nullable: true
+          readOnly: true
+        teacher_id:
+          type: integer
+          nullable: true
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - message
+      - role
+      - student_id
+      - teacher_id
+      - title
+    NotificationRoleEnum:
+      enum:
+      - student
+      - teacher
+      - tutor
+      type: string
+      description: |-
+        * `student` - Student
+        * `teacher` - Teacher
+        * `tutor` - Tutor
     PaginatedClassDetailList:
       type: object
       required:
@@ -2399,6 +2549,33 @@ components:
           type: integer
         teacher:
           type: integer
+    PatchedNotification:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/NotificationRoleEnum'
+        student_id:
+          type: integer
+          nullable: true
+          readOnly: true
+        teacher_id:
+          type: integer
+          nullable: true
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedRoom:
       type: object
       properties:

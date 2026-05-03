@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, effect, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { SessionDetail } from '../../../../apis';
+import { SessionDetail } from '../../../apis';
+import { SessionListStore } from '../../../stores/session.store';
 
-export interface StudentSessionByDate {
+export interface SessionByDate {
   date: string;
   displayDate: string;
   sessions: SessionDetail[];
@@ -12,29 +13,42 @@ export interface StudentSessionByDate {
 type SessionJoinState = 'ongoing' | 'upcoming' | 'finished';
 
 @Component({
-  selector: 'app-student-schedule-board',
+  selector: 'app-schedule-board',
   standalone: true,
   imports: [CommonModule, MatIconModule],
   templateUrl: './schedule-board.component.html',
   styleUrls: ['./schedule-board.component.scss']
 })
-export class StudentScheduleBoardComponent implements OnChanges {
-  @Input() sessions: SessionDetail[] = [];
+export class ScheduleBoardComponent implements OnInit {
+  private sessionListStore = inject(SessionListStore);
+
+  readonly user = this.sessionListStore.user;
+  readonly sessions = this.sessionListStore.sessions;
+
   @Input() joiningSessionId: number | null = null;
 
   @Output() joinSession = new EventEmitter<SessionDetail>();
 
   selectedWeekDate = new Date();
   selectedWeekDateValue = this.toLocalDateKey(new Date());
-  sessionsByDate: StudentSessionByDate[] = [];
+  sessionsByDate: SessionByDate[] = [];
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['sessions']) {
+  constructor() {
+    // Keep the grouped schedule in sync with the role-scoped sessions from store.
+    effect(() => {
+      this.sessions();
+      this.user();
       this.applyWeekFilter();
-    }
+    });
+  }
+
+  ngOnInit(): void {
+    this.sessionListStore.loadSessionList();
+    this.applyWeekFilter();
   }
 
   get selectedWeekDisplay(): string {
+    // Build a human-readable "Mon DD, YYYY – Mon DD, YYYY" range for the current week
     const { start, end } = this.getWeekRange(this.selectedWeekDate);
 
     const formatOptions: Intl.DateTimeFormatOptions = {
@@ -47,6 +61,7 @@ export class StudentScheduleBoardComponent implements OnChanges {
   }
 
   openWeekPicker(input: HTMLInputElement): void {
+    // Programmatically open the native date picker; fall back to focus+click
     const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
 
     if (pickerInput.showPicker) {
@@ -65,10 +80,12 @@ export class StudentScheduleBoardComponent implements OnChanges {
       return;
     }
 
+    // Delegate the rest of the update to the shared helper
     this.updateSelectedWeekByDateValue(target.value);
   }
 
   handleJoinSession(session: SessionDetail): void {
+    // Guard: only emit if the session is joinable and not already joining
     if (!this.isSessionJoinable(session) || this.isJoiningSession(session)) {
       return;
     }
@@ -76,27 +93,18 @@ export class StudentScheduleBoardComponent implements OnChanges {
     this.joinSession.emit(session);
   }
 
-  getSessionClass(session: SessionDetail): string {
-    if (session.class_obj) {
-      return 'session-teacher';
-    }
-
-    if (session.time_slot) {
-      return 'session-tutor';
-    }
-
-    return 'session-default';
-  }
-
   isSessionJoinable(session: SessionDetail): boolean {
+    // Only 'ongoing' sessions can be joined
     return this.getSessionJoinState(session) === 'ongoing';
   }
 
   isJoiningSession(session: SessionDetail): boolean {
+    // True when a join request for this session is in progress
     return this.joiningSessionId === session.id;
   }
 
   getSessionJoinButtonText(session: SessionDetail): string {
+    // Surface the join state in the button label so the user knows the session status
     const joinState = this.getSessionJoinState(session);
 
     if (joinState === 'ongoing') {
@@ -110,7 +118,29 @@ export class StudentScheduleBoardComponent implements OnChanges {
     return 'Join - Finished';
   }
 
+  getStatusColor(session: SessionDetail): string {
+    // Return a distinct background colour for each join state
+    const state = this.getSessionJoinState(session);
+    if (state === 'ongoing') {
+      return '#10b981';
+    }
+    if (state === 'upcoming') {
+      return '#514fe3';
+    }
+    return '#dcdcdc';
+  }
+
+  getStatusTextColor(session: SessionDetail): string {
+    // Use a darker text colour for finished/grey backgrounds to maintain contrast
+    const state = this.getSessionJoinState(session);
+    if (state === 'finished') {
+      return '#374151';
+    }
+    return '#e5e7eb';
+  }
+
   getSessionHeadline(session: SessionDetail): string {
+    // Build a descriptive "Subject/Student - Teacher" headline for the session card
     const studentName = (session as SessionDetail & { student?: { name?: string } | null }).student?.name;
     const teacherName = (session as SessionDetail & { teacher?: { name?: string } | null }).teacher?.name;
     const classSubjectName = (session as SessionDetail & {
@@ -129,6 +159,7 @@ export class StudentScheduleBoardComponent implements OnChanges {
       return;
     }
 
+    // Parse the date-input value (YYYY-MM-DD) into a local Date
     const pickedDate = new Date(`${dateValue}T00:00:00`);
     if (Number.isNaN(pickedDate.getTime())) {
       return;
@@ -140,10 +171,12 @@ export class StudentScheduleBoardComponent implements OnChanges {
   }
 
   private getWeekRange(anchorDate: Date): { start: Date; end: Date } {
+    // Calculate Monday-to-Sunday week boundaries for the given date
     const date = new Date(anchorDate);
     date.setHours(0, 0, 0, 0);
 
     const day = date.getDay();
+    // Offset to Monday (Sunday = 0 needs -6, all others use 1 - day)
     const diffToMonday = day === 0 ? -6 : 1 - day;
 
     const start = new Date(date);
@@ -159,8 +192,10 @@ export class StudentScheduleBoardComponent implements OnChanges {
     const { start, end } = this.getWeekRange(this.selectedWeekDate);
     const weekStartKey = this.toLocalDateKey(start);
     const weekEndKey = this.toLocalDateKey(end);
+    const sessions = this.getSessionsByRole();
 
-    const sessionsInWeek = this.sessions.filter((session) => {
+    // Keep only sessions whose date key falls within the selected week
+    const sessionsInWeek = sessions.filter((session) => {
       const sessionDateKey = this.toLocalDateKey(session.start_at);
       return sessionDateKey >= weekStartKey && sessionDateKey <= weekEndKey;
     });
@@ -169,11 +204,13 @@ export class StudentScheduleBoardComponent implements OnChanges {
   }
 
   private parseDateKey(dateKey: string): Date {
+    // Parse YYYY-MM-DD into a local Date without timezone shifts
     const [year, month, day] = dateKey.split('-').map(Number);
     return new Date(year, month - 1, day);
   }
 
-  private groupSessionsByDate(sessions: SessionDetail[]): StudentSessionByDate[] {
+  private groupSessionsByDate(sessions: SessionDetail[]): SessionByDate[] {
+    // Group sessions into a Map keyed by local date string
     const map = new Map<string, SessionDetail[]>();
 
     sessions.forEach((session) => {
@@ -186,6 +223,7 @@ export class StudentScheduleBoardComponent implements OnChanges {
       map.get(key)!.push(session);
     });
 
+    // Sort day buckets chronologically and sort sessions within each day by start time
     return Array.from(map.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, groupedSessions]) => ({
@@ -200,7 +238,23 @@ export class StudentScheduleBoardComponent implements OnChanges {
       }));
   }
 
+  private getSessionsByRole(): SessionDetail[] {
+    const currentUser = this.user();
+
+    if (!currentUser?.id || !currentUser?.role) {
+      return [];
+    }
+
+    // SessionListStore already loads role-specific sessions, so this is a safe role gate.
+    if (currentUser.role === 'student' || currentUser.role === 'teacher' || currentUser.role === 'tutor') {
+      return this.sessions();
+    }
+
+    return [];
+  }
+
   private toLocalDateKey(dateValue: string | Date): string {
+    // Produce a zero-padded YYYY-MM-DD key using local time (no UTC shift)
     const date = new Date(dateValue);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -209,7 +263,8 @@ export class StudentScheduleBoardComponent implements OnChanges {
     return `${year}-${month}-${day}`;
   }
 
-  private getSessionJoinState(session: SessionDetail): SessionJoinState {
+  getSessionJoinState(session: SessionDetail): SessionJoinState {
+    // Treat finished and cancelled as the same end state
     if (session.status === 'finished' || session.status === 'cancelled') {
       return 'finished';
     }
@@ -217,14 +272,17 @@ export class StudentScheduleBoardComponent implements OnChanges {
     const todayKey = this.toLocalDateKey(new Date());
     const startDateKey = this.toLocalDateKey(session.start_at);
 
+    // A session whose start date matches today is considered ongoing
     if (todayKey === startDateKey) {
       return 'ongoing';
     }
 
+    // Start date is in the future
     if (todayKey < startDateKey) {
       return 'upcoming';
     }
 
+    // Start date is in the past without a finished/cancelled status
     return 'finished';
   }
 }

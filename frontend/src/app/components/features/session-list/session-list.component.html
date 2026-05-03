@@ -1,0 +1,83 @@
+<div class="sl-container flex-col">
+
+  <!-- Header -->
+  <div class="sl-header flex-betw">
+    <div class="sl-title flex-cen">
+      <mat-icon>event_note</mat-icon>
+      <span>Sessions</span>
+    </div>
+    <div class="sl-role-badge flex-cen">
+      <span>{{ user().role }}</span>
+    </div>
+  </div>
+
+  <!-- Loading skeletons -->
+  @if (isLoading()) {
+    <div class="sl-skeleton-list flex-col">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="sl-skeleton-row flex-cen">
+          <div class="sk-icon"></div>
+          <div class="sk-body flex-col">
+            <div class="sk-line sk-line-wide"></div>
+            <div class="sk-line sk-line-narrow"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error -->
+  @if (errorMessage()) {
+    <div class="sl-error flex-cen">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Grouped notification list -->
+  @if (!isLoading() && !errorMessage()) {
+    <div class="sl-body flex-col">
+
+      @for (group of sessionsByDate(); track group.label) {
+
+        <!-- Date label -->
+        <div class="date-label">{{ group.label }}</div>
+
+        @for (session of group.sessions; track session.id) {
+          <div class="notif-row flex-cen" [class]="'ns-' + (session.status ?? 'upcoming')" (click)="selectSession(session)">
+
+            <!-- Status icon -->
+            <div class="notif-icon flex-cen" [class]="'icon-' + (session.status ?? 'upcoming')">
+              <mat-icon>{{ statusIcon(session.status) }}</mat-icon>
+            </div>
+
+            <!-- Content -->
+            <div class="notif-content flex-col">
+              <span class="notif-title">{{ getSessionTitle(session) }}</span>
+              <p class="notif-sub">{{ getPersonName(session) }}</p>
+              <p class="notif-time">
+                {{ formatTime(session.start_at) }} – {{ formatTime(session.end_at) }}
+              </p>
+            </div>
+
+            <!-- Status badge -->
+            <div class="notif-badge flex-cen" [class]="'badge-' + (session.status ?? 'upcoming')">
+              <span>{{ session.status ?? 'upcoming' }}</span>
+            </div>
+
+          </div>
+        }
+
+      }
+
+      @if (sessionsByDate().length === 0) {
+        <div class="sl-empty flex-col">
+          <mat-icon>event_busy</mat-icon>
+          <span>No sessions found</span>
+        </div>
+      }
+
+    </div>
+  }
+
+</div>

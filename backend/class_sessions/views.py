@@ -75,10 +75,12 @@ class SessionViewSet(ModelViewSet):
         """
         GET /sessions/by-student/{student_id}/
         """
+        # Collect all class IDs the student is enrolled in via the in_class table
         class_ids = InClass.objects.filter(
             student_id=student_id
         ).values_list('class_obj_id', flat=True)
 
+        # Include both direct tutor sessions (student_id match) and class sessions
         sessions = self.queryset.filter(
             Q(student_id=student_id) |
             Q(class_obj_id__in=class_ids)
@@ -108,12 +110,14 @@ class SessionViewSet(ModelViewSet):
         GET /sessions/by-teacher/{teacher_id}/
         """
         teacher = get_object_or_404(Teacher, pk=teacher_id)
+        # Only teachers (not tutors) use this endpoint
         if teacher.role != Teacher.TEACHER:
             return Response(
                 {'detail': 'This user is not a teacher.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Limit to sessions that belong to classes this teacher owns
         class_ids = Class.objects.filter(teacher_id=teacher_id).values_list('id', flat=True)
         sessions = self.queryset.filter(
             class_obj_id__in=class_ids,
@@ -143,12 +147,14 @@ class SessionViewSet(ModelViewSet):
     )
     def by_tutor(self, request, tutor_id=None):
         tutor = get_object_or_404(Teacher, pk=tutor_id)
+        # Guard: reject if the user is a teacher rather than a tutor
         if tutor.role != Teacher.TUTOR:
             return Response(
                 {'detail': 'This user is not a tutor.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Tutor sessions are always linked to time slots, not class objects
         sessions = self.queryset.filter(
             time_slot__teacher_id=tutor_id,
             teacher_id=tutor_id,

@@ -297,6 +297,19 @@ class PaymentDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 # =========================
+# NOTIFICATION
+# =========================
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = [
+            'id', 'role', 'student_id', 'teacher_id',
+            'title', 'message', 'is_read', 'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']
+
+
+# =========================
 # LOGIN
 # =========================
 class LoginSerializer(serializers.Serializer):

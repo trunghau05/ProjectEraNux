@@ -396,3 +396,45 @@ class Payment(TimeStampedModel):
     class Meta:
         db_table = 'payment'
         unique_together = ('teacher', 'period')
+
+
+# =========================
+# NOTIFICATION
+# =========================
+class Notification(TimeStampedModel):
+    STUDENT = 'student'
+    TEACHER = 'teacher'
+    TUTOR = 'tutor'
+
+    ROLE_CHOICES = [
+        (STUDENT, 'Student'),
+        (TEACHER, 'Teacher'),
+        (TUTOR, 'Tutor'),
+    ]
+
+    # Which role this notification targets
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+
+    # Nullable FKs — one will be set depending on role
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notifications',
+    )
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='notifications',
+    )
+
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'notification'
+        ordering = ['-created_at']

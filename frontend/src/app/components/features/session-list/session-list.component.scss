@@ -1,0 +1,229 @@
+// ── Container ────────────────────────────────────────────────────────────────
+
+.sl-container {
+  background-color: white;
+  height: 100vh;
+  width: 260px;
+  min-width: 260px;
+  box-sizing: border-box;
+  padding: 30px 16px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.sl-header {
+  margin-bottom: 16px;
+}
+
+.sl-title {
+  gap: 7px;
+
+  mat-icon {
+    height: 16px;
+    width: 16px;
+    font-size: 16px;
+    color: #6b46c1;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #232323;
+  }
+}
+
+.sl-role-badge {
+  background-color: #f0ebff;
+  border-radius: 20px;
+  padding: 3px 10px;
+
+  span {
+    font-size: 10px;
+    font-weight: 600;
+    color: #6b46c1;
+    text-transform: capitalize;
+  }
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────────
+
+.sl-skeleton-list {
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sl-skeleton-row {
+  gap: 10px;
+}
+
+.sk-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0ebff 25%, #e8e0fa 50%, #f0ebff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.sk-body {
+  flex: 1;
+  gap: 6px;
+}
+
+.sk-line {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0ebff 25%, #e8e0fa 50%, #f0ebff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.sk-line-wide  { width: 80%; }
+.sk-line-narrow { width: 50%; }
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ── Error ─────────────────────────────────────────────────────────────────────
+
+.sl-error {
+  gap: 8px;
+  padding: 16px 0;
+  color: #e53e3e;
+  font-size: 11px;
+
+  mat-icon {
+    height: 16px;
+    width: 16px;
+    font-size: 16px;
+  }
+}
+
+// ── Body ──────────────────────────────────────────────────────────────────────
+
+.sl-body {
+  gap: 0;
+}
+
+// ── Date label ────────────────────────────────────────────────────────────────
+
+.date-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 14px 0 6px 0;
+}
+
+// ── Notification row ──────────────────────────────────────────────────────────
+
+.notif-row {
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: #f7f7f7; }
+}
+
+// ── Icon ─────────────────────────────────────────────────────────────────────
+
+.notif-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+
+  mat-icon {
+    height: 15px;
+    width: 15px;
+    font-size: 15px;
+  }
+}
+
+.icon-ongoing  { background: #f0ebff; color: #6b46c1; mat-icon { color: #6b46c1; } }
+.icon-upcoming { background: #ebf4ff; color: #2b6cb0; mat-icon { color: #2b6cb0; } }
+.icon-finished { background: #f3f4f6; color: #6b7280; mat-icon { color: #6b7280; } }
+.icon-cancelled { background: #fff5f5; color: #c53030; mat-icon { color: #c53030; } }
+
+// ── Content ───────────────────────────────────────────────────────────────────
+
+.notif-content {
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.notif-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-sub {
+  font-size: 10px;
+  color: #6b7280;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-time {
+  font-size: 10px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+// ── Badge ─────────────────────────────────────────────────────────────────────
+
+.notif-badge {
+  border-radius: 4px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+  align-self: flex-start;
+
+  span {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+}
+
+.badge-ongoing  { background: #f0ebff; color: #6b46c1; }
+.badge-upcoming { background: #ebf4ff; color: #2b6cb0; }
+.badge-finished { background: #f3f4f6; color: #6b7280; }
+.badge-cancelled { background: #fff5f5; color: #c53030; }
+
+// ── Empty ─────────────────────────────────────────────────────────────────────
+
+.sl-empty {
+  align-items: center;
+  gap: 8px;
+  padding: 40px 0;
+  color: #9ca3af;
+
+  mat-icon {
+    height: 28px;
+    width: 28px;
+    font-size: 28px;
+  }
+
+  span {
+    font-size: 11px;
+  }
+}

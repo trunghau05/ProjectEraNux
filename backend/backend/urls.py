@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/rooms/', include('rooms.urls')),
     path('api/login/', include('core.urls')),
     path('api/media/upload-recording/', UploadRecordingView.as_view(), name='upload-recording'),
+    path('api/notifications/', include('notifications.urls')),
 ]
