@@ -21,6 +21,56 @@ import { ToastService } from '../services/toast.service';
     .toolbar-add mat-icon { width:16px; height:16px; font-size:16px; }
     app-search { flex: 1; min-width: 420px; }
     .booking-list { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 30px; align-items: flex-start; }
+    .booking-list.tutor-list { gap: 35px; }
+    .booking-list.tutor-list .booking-card {
+      flex: 0 0 calc((100% - 105px) / 4);
+      max-width: calc((100% - 105px) / 4);
+      min-width: 0;
+      padding: 13px;
+      gap: 10px;
+    }
+    .booking-list.tutor-list .booking-card-header { gap: 10px; }
+    .booking-list.tutor-list .booking-avatar { width: 44px; height: 44px; }
+    .booking-list.tutor-list .booking-info { gap: 3px; }
+    .booking-list.tutor-list .booking-name { font-size: 11px; }
+    .booking-list.tutor-list .booking-role { font-size: 9px; }
+    .booking-list.tutor-list .booking-badge { padding: 3px 7px; }
+    .booking-list.tutor-list .booking-badge span { font-size: 8px; }
+    .booking-list.tutor-list .booking-detail-label,
+    .booking-list.tutor-list .booking-detail-value { font-size: 10px; }
+    .booking-list.tutor-list .booking-button { padding: 7px; font-size: 10px; }
+    .booking-list.tutor-list .booking-button.icon-only {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      min-height: 30px;
+      flex-basis: 30px;
+    }
+    .booking-list.tutor-list .booking-button.icon-only mat-icon {
+      width: 14px;
+      height: 14px;
+      font-size: 14px;
+      line-height: 14px;
+    }
+    .booking-list.booked-student-list .booking-card {
+      padding: 13px;
+      gap: 10px;
+    }
+    .booking-list.booked-student-list .booking-card-header { gap: 10px; }
+    .booking-list.booked-student-list .booking-avatar { width: 44px; height: 44px; }
+    .booking-list.booked-student-list .booking-info { gap: 3px; }
+    .booking-list.booked-student-list .booking-name { font-size: 11px; }
+    .booking-list.booked-student-list .booking-role { font-size: 9px; }
+    .booking-list.booked-student-list .booking-badge { padding: 3px 7px; }
+    .booking-list.booked-student-list .booking-badge span { font-size: 8px; }
+    .booking-list.booked-student-list .booking-details { gap: 7px; }
+    .booking-list.booked-student-list .booking-detail-label,
+    .booking-list.booked-student-list .booking-detail-value { font-size: 10px; }
+    .booking-list.booked-student-list .booking-button { padding: 7px; font-size: 10px; }
+    .booking-list.booked-student-list .slot-item { padding: 8px; }
+    .booking-list.booked-student-list .slot-time { font-size: 9px; }
+    .booking-list.booked-student-list .slot-status { font-size: 8px; }
+    .booking-list.booked-student-list .slot-action-button { padding: 5px 8px; font-size: 9px; }
     .booking-card { background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; align-self: flex-start; }
     .booking-list .booking-card { flex: 1 1 280px; max-width: calc(25% - 15px); min-width: 260px; }
     .booking-card-header { display: flex; align-items: center; gap: 12px; }
@@ -58,9 +108,9 @@ import { ToastService } from '../services/toast.service';
     .btn-pending { background-color: #7e72bdff; }
     .btn-completed { background-color: #3432c0ff; }
     .btn-cancelled { background-color: #bb295fff; }
-    .booking-empty { margin-top: 30px; padding: 24px; border-radius: 12px; background: white; display: flex; flex-direction: column; gap: 8px; }
-    .booking-empty-title { font-size: 13px; font-weight: 600; }
-    .booking-empty-text { font-size: 11px; color: #7a7a7a; }
+    .booking-empty { margin-top: 16px; padding: 12px 16px; border-radius: 8px; background: #fafafa; border: 1px solid #ececec; display: flex; flex-direction: column; gap: 4px; }
+    .booking-empty-title { font-size: 12px; font-weight: 500; color: #5a5a6e; }
+    .booking-empty-text { font-size: 11px; color: #9a9ab0; }
     .slot-list { display: flex; flex-direction: column; gap: 8px; }
     .slot-item { background: #f7f5ff; border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .slot-item.clickable { cursor: pointer; }
@@ -77,7 +127,10 @@ import { ToastService } from '../services/toast.service';
     .slot-modal-overlay { position: fixed; inset: 0; background: rgba(9, 9, 18, 0.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
     .slot-auth-box { width: min(100%, 420px); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 34px rgba(0, 0, 0, 0.2); }
     .slot-auth-right { width: 100%; box-sizing: border-box; background: #fff; padding: 26px; display: flex; flex-direction: column; gap: 10px; }
-    .slot-auth-right h4 { margin: 0 0 6px; font-size: 18px; }
+    .slot-modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+    .slot-modal-header h4 { margin: 0; font-size: 18px; }
+    .slot-modal-close-btn { flex-shrink: 0; width: 28px; height: 28px; border: none; background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #9a9ab0; transition: background 0.15s, color 0.15s; padding: 0; margin-top: -2px; }
+    .slot-modal-close-btn:hover { background: #f1f0f8; color: #1a1a2e; }
     .slot-form-row { display: flex; flex-direction: column; gap: 10px; }
     .slot-label { font-size: 11px; font-weight: 600; color: #4a4a4a; margin-bottom: 4px; }
     .slot-field { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #e6eef7; border-radius: 6px; outline: none; font-size: 12px; }
@@ -92,9 +145,17 @@ import { ToastService } from '../services/toast.service';
     @keyframes spin { to { transform: rotate(360deg); } }
     @media (max-width: 1200px) {
       .booking-list .booking-card { max-width: calc(33.333% - 14px); }
+      .booking-list.tutor-list .booking-card {
+        flex-basis: calc((100% - 70px) / 3);
+        max-width: calc((100% - 70px) / 3);
+      }
     }
     @media (max-width: 900px) {
       .booking-list .booking-card { max-width: calc(50% - 10px); }
+      .booking-list.tutor-list .booking-card {
+        flex-basis: calc((100% - 35px) / 2);
+        max-width: calc((100% - 35px) / 2);
+      }
     }
     @media (max-width: 768px) {
       .booking-container { padding: 20px; }
@@ -103,6 +164,10 @@ import { ToastService } from '../services/toast.service';
       .toolbar-spacer { margin-left: 0; width: 100%; }
       .toolbar-add { width: 100%; justify-content: center; }
       .booking-list .booking-card { max-width: 100%; min-width: 100%; }
+      .booking-list.tutor-list .booking-card {
+        flex-basis: 100%;
+        max-width: 100%;
+      }
       .slot-auth-right { width: 100%; }
       .slot-presets { grid-template-columns: 1fr; }
     }
@@ -165,7 +230,12 @@ import { ToastService } from '../services/toast.service';
         <div class="slot-modal-overlay" (click)="closeCreateSlotForm()">
           <div class="slot-auth-box" (click)="$event.stopPropagation()">
             <div class="slot-auth-right">
-              <h4>New tutor slot</h4>
+              <div class="slot-modal-header">
+                <h4>New tutor slot</h4>
+                <button type="button" class="slot-modal-close-btn" (click)="closeCreateSlotForm()" aria-label="Close">
+                  <mat-icon style="font-size:18px;width:18px;height:18px;line-height:18px">close</mat-icon>
+                </button>
+              </div>
               <form class="slot-form-row" (ngSubmit)="submitCreateSlot()" #slotForm="ngForm">
                 <div>
                   <div class="slot-label">Start time</div>
@@ -232,7 +302,7 @@ import { ToastService } from '../services/toast.service';
         </div>
       } @else if (isStudentRole()) {
         @if (getFilteredTutors().length > 0) {
-          <div class="booking-list">
+          <div class="booking-list tutor-list">
             @for (tutor of getFilteredTutors(); track trackTutor($index, tutor)) {
               <div class="booking-card">
                 <div class="booking-card-header">
@@ -286,10 +356,8 @@ import { ToastService } from '../services/toast.service';
                       }
                     </div>
                   } @else {
-                    <div class="slot-list">
-                      <div class="slot-item">
-                        <span class="slot-time">No available time slots.</span>
-                      </div>
+                    <div class="booking-empty" style="margin-top:0">
+                      <span class="booking-empty-text">No available time slots.</span>
                     </div>
                   }
                 }
@@ -308,7 +376,7 @@ import { ToastService } from '../services/toast.service';
         }
       } @else if (isTutorRole()) {
         @if (getFilteredBookedStudents().length > 0) {
-          <div class="booking-list">
+          <div class="booking-list booked-student-list">
             @for (item of getFilteredBookedStudents(); track trackStudent($index, item)) {
               <div class="booking-card">
                 <div class="booking-card-header">

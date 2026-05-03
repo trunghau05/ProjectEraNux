@@ -2472,6 +2472,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        recording_audio_url:
+          type: string
+          nullable: true
         recording_uploaded_at:
           type: string
           format: date-time
@@ -2745,6 +2748,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        recording_audio_url:
+          type: string
+          nullable: true
         recording_uploaded_at:
           type: string
           format: date-time
@@ -2807,6 +2813,9 @@ components:
           type: string
           nullable: true
           maxLength: 255
+        recording_audio_url:
+          type: string
+          nullable: true
         recording_uploaded_at:
           type: string
           format: date-time
@@ -3018,6 +3027,10 @@ components:
         file:
           type: string
           format: uri
+        audio_file:
+          type: string
+          format: uri
+          nullable: true
         roomId:
           type: string
         userId:
@@ -3037,6 +3050,10 @@ components:
           nullable: true
         public_id:
           type: string
+          nullable: true
+        audio_url:
+          type: string
+          format: uri
           nullable: true
         session_id:
           type: integer

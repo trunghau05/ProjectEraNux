@@ -14,6 +14,7 @@ export interface UploadRecordingResponse {
     message: string;
     secure_url?: string | null;
     public_id?: string | null;
+    audio_url?: string | null;
     session_id?: number | null;
     duration?: number | null;
     bytes?: number | null;

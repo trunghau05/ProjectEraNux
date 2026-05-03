@@ -38,16 +38,17 @@ export class MediaService extends BaseService {
     /**
      * @endpoint post /api/media/upload-recording/
      * @param file 
+     * @param audioFile 
      * @param roomId 
      * @param userId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public mediaUploadRecordingCreate(file: string, roomId?: string, userId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UploadRecordingResponse>;
-    public mediaUploadRecordingCreate(file: string, roomId?: string, userId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UploadRecordingResponse>>;
-    public mediaUploadRecordingCreate(file: string, roomId?: string, userId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UploadRecordingResponse>>;
-    public mediaUploadRecordingCreate(file: string, roomId?: string, userId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public mediaUploadRecordingCreate(file: string, audioFile?: string, roomId?: string, userId?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<UploadRecordingResponse>;
+    public mediaUploadRecordingCreate(file: string, audioFile?: string, roomId?: string, userId?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<UploadRecordingResponse>>;
+    public mediaUploadRecordingCreate(file: string, audioFile?: string, roomId?: string, userId?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<UploadRecordingResponse>>;
+    public mediaUploadRecordingCreate(file: string, audioFile?: string, roomId?: string, userId?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (file === null || file === undefined) {
             throw new Error('Required parameter file was null or undefined when calling mediaUploadRecordingCreate.');
         }
@@ -84,6 +85,9 @@ export class MediaService extends BaseService {
 
         if (file !== undefined) {
             localVarFormParams = localVarFormParams.append('file', <any>file) as any || localVarFormParams;
+        }
+        if (audioFile !== undefined) {
+            localVarFormParams = localVarFormParams.append('audio_file', <any>audioFile) as any || localVarFormParams;
         }
         if (roomId !== undefined) {
             localVarFormParams = localVarFormParams.append('roomId', <any>roomId) as any || localVarFormParams;

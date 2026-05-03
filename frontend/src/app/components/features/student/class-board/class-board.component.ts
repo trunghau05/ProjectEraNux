@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { ClassDetail } from '../../../../apis';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-student-class-board',
@@ -16,11 +17,17 @@ export class StudentClassBoardComponent {
   @Input() currentValue = 30;
   @Input() maxValue = 100;
 
+  private router = inject(Router);
+
   get progressPercent(): number {
     if (this.maxValue <= 0) {
       return 0;
     }
 
     return (this.currentValue / this.maxValue) * 100;
+  }
+
+  navigateToClass() {
+    this.router.navigate(['/class']);
   }
 }

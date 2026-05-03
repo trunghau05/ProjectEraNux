@@ -18,6 +18,7 @@ export interface Session {
     status?: SessionStatusEnum;
     recording_url?: string | null;
     recording_public_id?: string | null;
+    recording_audio_url?: string | null;
     recording_uploaded_at?: string | null;
     class_obj?: number | null;
     time_slot?: number | null;

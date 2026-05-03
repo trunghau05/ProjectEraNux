@@ -44,9 +44,18 @@ type BookedTutorCard = {
             .label mat-icon { height: 15px; width: 15px; font-size: 15px; }
             .center::-webkit-scrollbar, app-user-info::-webkit-scrollbar { display: none; width: 0; height: 0; }
             .center, app-user-info { scrollbar-width: none; }
-            .booking { width: 100%; }
+            .booking { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+            .booking-card { min-width: 0; width: 100%; background-color: white; border-radius: 10px; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; }
             app-student-schedule-board { width: 55%; }
             app-student-class-board { width: 45%; }
+
+            @media (max-width: 1200px) {
+                .booking { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            }
+
+            @media (max-width: 768px) {
+                .booking { grid-template-columns: 1fr; }
+            }
         </style>
 
         <div class="box">
@@ -128,39 +137,39 @@ type BookedTutorCard = {
                             <mat-icon>arrow_right_alt</mat-icon>
                         </div>
                     </div>
-                    <div class="booking mt-20 flex-cen" style="gap: 20px; padding: 0;">
+                    <div class="booking mt-20" style="padding: 0;">
                         @for (card of bookedTutorCards(); track card.tutor.id) {
-                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+                        <div class="booking-card">
                             <div class="flex-cen" style="gap: 12px;">
-                                <img [src]="card.tutor.img || 'default-avatar.jpg'" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <img [src]="card.tutor.img || 'default-avatar.jpg'" alt="avatar" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
                                 <div class="flex-col" style="gap: 4px; flex: 1;">
-                                    <span style="font-size: 12px; font-weight: 500;">{{ card.tutor.name }}</span>
-                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">{{ card.tutor.role === 'tutor' ? 'Tutor' : 'Teacher' }}</p>
+                                    <span style="font-size: 11px; font-weight: 500;">{{ card.tutor.name }}</span>
+                                    <p style="font-size: 9px; color: #acacacff; margin: 0;">{{ card.tutor.role === 'tutor' ? 'Tutor' : 'Teacher' }}</p>
                                 </div>
                                 @if (card.isBooked) {
                                 <div [ngStyle]="{'background-color': getBookingStatusColor(card.status)}" style="padding: 4px 8px; border-radius: 4px;" class="flex-cen">
-                                    <span style="font-size: 9px; color: white; font-weight: 500;">{{ getBookingStatusLabel(card.status) }}</span>
+                                    <span style="font-size: 8px; color: white; font-weight: 500;">{{ getBookingStatusLabel(card.status) }}</span>
                                 </div>
                                 }
                             </div>
                             <div style="border-bottom: 1px solid #f1f1f1;"></div>
                             <div class="flex-col" style="gap: 8px;">
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Email:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">{{ card.tutor.email }}</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Email:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">{{ card.tutor.email }}</span>
                                 </div>
                                 @if (card.tutor.rating) {
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Rating:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">{{ card.tutor.rating }}/5</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Rating:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">{{ card.tutor.rating }}/5</span>
                                 </div>
                                 }
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">{{ card.isBooked ? 'Next Session:' : 'Status:' }}</span>
-                                    <span style="font-size: 11px; font-weight: 500;">{{ card.isBooked ? (card.nextSlot || 'No upcoming') : 'Not booked' }}</span>
+                                    <span style="font-size: 10px; color: #acacacff;">{{ card.isBooked ? 'Next Session:' : 'Status:' }}</span>
+                                    <span style="font-size: 10px; font-weight: 500;">{{ card.isBooked ? (card.nextSlot || 'No upcoming') : 'Not booked' }}</span>
                                 </div>
                             </div>
-                            <button [ngStyle]="{'background-color': card.isBooked ? getBookingStatusColor(card.status) : '#6b46c1'}" style="color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;" (click)="navigateToBooking()">{{ card.isBooked ? 'View Details' : 'Book Session' }}</button>
+                            <button [ngStyle]="{'background-color': card.isBooked ? getBookingStatusColor(card.status) : '#6b46c1'}" style="color: white; border: none; border-radius: 5px; padding: 7px; font-size: 10px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;" (click)="navigateToBooking()">{{ card.isBooked ? 'View Details' : 'Book Session' }}</button>
                         </div>
                         }
                     </div>
@@ -176,14 +185,6 @@ type BookedTutorCard = {
                             <div class="ic flex-cen">
                                 <mat-icon>search</mat-icon>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="label flex-betw mt-20">
-                        <span>Your Courses</span>
-                        <div class="flex-cen" style="gap: 10px;"> 
-                            <span>More</span>
-                            <mat-icon>arrow_right_alt</mat-icon>
                         </div>
                     </div>
 
@@ -256,95 +257,95 @@ type BookedTutorCard = {
                             <mat-icon>arrow_right_alt</mat-icon>
                         </div>
                     </div>
-                    <div class="booking mt-20 flex-cen" style="gap: 20px; padding: 0;">
+                    <div class="booking mt-20" style="padding: 0;">
                         <!-- Booking Card 1 -->
-                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+                        <div class="booking-card">
                             <div class="flex-cen" style="gap: 12px;">
-                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <img src="default-avatar.jpg" alt="avatar" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
                                 <div class="flex-col" style="gap: 4px; flex: 1;">
-                                    <span style="font-size: 12px; font-weight: 500;">Nguyễn Văn Minh</span>
-                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Teacher</p>
+                                    <span style="font-size: 11px; font-weight: 500;">Nguyễn Văn Minh</span>
+                                    <p style="font-size: 9px; color: #acacacff; margin: 0;">Teacher</p>
                                 </div>
                                 <div style="background-color: #6b46c1; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
-                                    <span style="font-size: 9px; color: white; font-weight: 500;">Active</span>
+                                    <span style="font-size: 8px; color: white; font-weight: 500;">Active</span>
                                 </div>
                             </div>
                             <div style="border-bottom: 1px solid #f1f1f1;"></div>
                             <div class="flex-col" style="gap: 8px;">
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Mathematics</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Subject:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">Mathematics</span>
                                 </div>
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">2h/week</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Session:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">2h/week</span>
                                 </div>
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Next class:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Today 3PM</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Next class:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">Today 3PM</span>
                                 </div>
                             </div>
-                            <button style="background-color: #6b46c1; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
+                            <button style="background-color: #6b46c1; color: white; border: none; border-radius: 5px; padding: 7px; font-size: 10px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
                         </div>
 
                         <!-- Booking Card 2 -->
-                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+                        <div class="booking-card">
                             <div class="flex-cen" style="gap: 12px;">
-                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <img src="default-avatar.jpg" alt="avatar" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
                                 <div class="flex-col" style="gap: 4px; flex: 1;">
-                                    <span style="font-size: 12px; font-weight: 500;">Trần Thị Hương</span>
-                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Tutor</p>
+                                    <span style="font-size: 11px; font-weight: 500;">Trần Thị Hương</span>
+                                    <p style="font-size: 9px; color: #acacacff; margin: 0;">Tutor</p>
                                 </div>
                                 <div style="background-color: #7e72bdff; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
-                                    <span style="font-size: 9px; color: white; font-weight: 500;">Pending</span>
+                                    <span style="font-size: 8px; color: white; font-weight: 500;">Pending</span>
                                 </div>
                             </div>
                             <div style="border-bottom: 1px solid #f1f1f1;"></div>
                             <div class="flex-col" style="gap: 8px;">
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Physics</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Subject:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">Physics</span>
                                 </div>
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">1.5h/week</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Session:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">1.5h/week</span>
                                 </div>
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Start date:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Jan 20, 2026</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Start date:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">Jan 20, 2026</span>
                                 </div>
                             </div>
-                            <button style="background-color: #7e72bdff; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
+                            <button style="background-color: #7e72bdff; color: white; border: none; border-radius: 5px; padding: 7px; font-size: 10px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">View Details</button>
                         </div>
 
                         <!-- Booking Card 3 -->
-                        <div style="flex: 1; background-color: white; border-radius: 10px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px;">
+                        <div class="booking-card">
                             <div class="flex-cen" style="gap: 12px;">
-                                <img src="default-avatar.jpg" alt="avatar" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                                <img src="default-avatar.jpg" alt="avatar" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">
                                 <div class="flex-col" style="gap: 4px; flex: 1;">
-                                    <span style="font-size: 12px; font-weight: 500;">Lê Văn Hải</span>
-                                    <p style="font-size: 10px; color: #acacacff; margin: 0;">Teacher</p>
+                                    <span style="font-size: 11px; font-weight: 500;">Lê Văn Hải</span>
+                                    <p style="font-size: 9px; color: #acacacff; margin: 0;">Teacher</p>
                                 </div>
                                 <div style="background-color: #3432c0ff; padding: 4px 8px; border-radius: 4px;" class="flex-cen">
-                                    <span style="font-size: 9px; color: white; font-weight: 500;">Completed</span>
+                                    <span style="font-size: 8px; color: white; font-weight: 500;">Completed</span>
                                 </div>
                             </div>
                             <div style="border-bottom: 1px solid #f1f1f1;"></div>
                             <div class="flex-col" style="gap: 8px;">
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Subject:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Chemistry</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Subject:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">Chemistry</span>
                                 </div>
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Session:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">2h/week</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Session:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">2h/week</span>
                                 </div>
                                 <div class="flex-betw">
-                                    <span style="font-size: 11px; color: #acacacff;">Ended:</span>
-                                    <span style="font-size: 11px; font-weight: 500;">Dec 31, 2025</span>
+                                    <span style="font-size: 10px; color: #acacacff;">Ended:</span>
+                                    <span style="font-size: 10px; font-weight: 500;">Dec 31, 2025</span>
                                 </div>
                             </div>
-                            <button style="background-color: #3432c0ff; color: white; border: none; border-radius: 5px; padding: 8px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">Ended</button>
+                            <button style="background-color: #3432c0ff; color: white; border: none; border-radius: 5px; padding: 7px; font-size: 10px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">Ended</button>
                         </div>
                     </div>
                 </div>
